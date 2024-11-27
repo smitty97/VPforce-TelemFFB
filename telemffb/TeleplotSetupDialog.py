@@ -21,9 +21,9 @@ import telemffb.globals as G
 import telemffb.utils as utils
 
 
-from PyQt5.QtCore import QRegExp
-from PyQt5.QtGui import QIntValidator, QRegExpValidator
-from PyQt5.QtWidgets import QDialog, QDialogButtonBox, QListWidget, QMessageBox, QPushButton, QVBoxLayout
+from PyQt6.QtCore import QRegExp
+from PyQt6.QtGui import QIntValidator, QRegExpValidator
+from PyQt6.QtWidgets import QDialog, QDialogButtonBox, QListWidget, QMessageBox, QPushButton, QVBoxLayout
 
 from .ui.Ui_TeleplotDialog import Ui_TeleplotDialog
 
@@ -70,11 +70,11 @@ class TeleplotSetupDialog(QDialog, Ui_TeleplotDialog):
             refresh_button.setText("Refresh Keys")
             layout.addWidget(refresh_button)
             layout.addWidget(self.list_widget)
-            button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel | QDialogButtonBox.Reset)
+            button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel | QDialogButtonBox.StandardButton.Reset)
             refresh_button.clicked.connect(self.refresh_keys)
             button_box.accepted.connect(self.populate_keys)
             button_box.rejected.connect(self.reject)
-            button_box.button(QDialogButtonBox.Reset).clicked.connect(self.clearSelection)
+            button_box.button(QDialogButtonBox.StandardButton.Reset).clicked.connect(self.clearSelection)
             layout.addWidget(button_box)
 
         def populate_keys(self):
@@ -97,7 +97,7 @@ class TeleplotSetupDialog(QDialog, Ui_TeleplotDialog):
             self.list_widget.clearSelection()
     def select_active_telemetry(self):
         self._telem_selection_window = self.KeySelectionDialog(parent=self)
-        self._telem_selection_window.exec_()
+        self._telem_selection_window.exec()
         pass
     def save_teleplot(self):
         if self.validate_text():

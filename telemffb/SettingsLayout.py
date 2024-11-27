@@ -23,10 +23,10 @@ import logging
 import os
 import re
 
-from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QCursor, QIcon, QColor, QPixmap
-from PyQt5.QtWidgets import (QGridLayout, QLabel, QPushButton, QStyle,
+from PyQt6 import QtWidgets, QtCore
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QCursor, QIcon, QColor, QPixmap
+from PyQt6.QtWidgets import (QGridLayout, QLabel, QPushButton, QStyle,
                              QToolButton, QCheckBox, QComboBox, QLineEdit, QFileDialog, QSpinBox, QHBoxLayout)
 
 from telemffb.ButtonPressThread import ButtonPressThread
@@ -201,7 +201,7 @@ class SettingsLayout(QGridLayout):
                         i -= 1   # bump .1 setting onto the enable row
                 self.generate_settings_row(item, i, rowdisabled)
 
-        spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Expanding)
         self.addItem(spacerItem, i+1, 1, 1, 1)
         # Give entry column a high stretch factor, all others remain default 0.
         # When window is resized, the entry column will grow to take up all the new space
@@ -348,19 +348,19 @@ class SettingsLayout(QGridLayout):
         self.addWidget(label, i, lbl_col, 1, lbl_colspan)
 
         slider = NoWheelSlider()
-        slider.setOrientation(QtCore.Qt.Horizontal)
+        slider.setOrientation(QtCore.Qt.Orientation.Horizontal)
         slider.setObjectName(f"sld_{item['name']}")
 
         n_slider = NoWheelNumberSlider()
-        n_slider.setOrientation(QtCore.Qt.Horizontal)
+        n_slider.setOrientation(QtCore.Qt.Orientation.Horizontal)
         n_slider.setObjectName(f"sld_{item['name']}")
 
         d_slider = NoWheelSlider()
-        d_slider.setOrientation(QtCore.Qt.Horizontal)
+        d_slider.setOrientation(QtCore.Qt.Orientation.Horizontal)
         d_slider.setObjectName(f"dsld_{item['name']}")
 
         df_slider = NoWheelSlider()
-        df_slider.setOrientation(QtCore.Qt.Horizontal)
+        df_slider.setOrientation(QtCore.Qt.Orientation.Horizontal)
         df_slider.setObjectName(f"dfsld_{item['name']}")
 
         m_butt = QPushButton("-")
@@ -411,20 +411,20 @@ class SettingsLayout(QGridLayout):
         # unit?
         line_edit.setText(item['value'])
         line_edit.blockSignals(False)
-        line_edit.setAlignment(Qt.AlignHCenter)
+        line_edit.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         line_edit.setObjectName(f"vle_{item['name']}")
         line_edit.setMinimumWidth(150)
         line_edit.editingFinished.connect(self.line_edit_changed)
 
         expand_button = QToolButton()
         if item['name'] in self.expanded_items:
-            expand_button.setArrowType(Qt.DownArrow)
+            expand_button.setArrowType(Qt.ArrowType.DownArrow)
         else:
-            expand_button.setArrowType(Qt.RightArrow)
+            expand_button.setArrowType(Qt.ArrowType.RightArrow)
         expand_button.setMaximumWidth(24)
         expand_button.setMinimumWidth(24)
         expand_button.setObjectName(f"ex_{item['name']}")
-        expand_button.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+        expand_button.setCursor(QCursor(QtCore.Qt.CursorShape.PointingHandCursor))
         expand_button.setStyleSheet("""
             QToolButton {
                 font-size: 16px;  /* Adjust the font size */
@@ -451,11 +451,11 @@ class SettingsLayout(QGridLayout):
         self.usbdevice_button = QPushButton(usb_button_text)
         self.usbdevice_button.setMinimumWidth(150)
         self.usbdevice_button.setObjectName(f"pb_{item['name']}")
-        self.usbdevice_button.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+        self.usbdevice_button.setCursor(QCursor(QtCore.Qt.CursorShape.PointingHandCursor))
         self.usbdevice_button.clicked.connect(self.usb_button_clicked)
 
         value_label = QLabel()
-        value_label.setAlignment(Qt.AlignVCenter)
+        value_label.setAlignment(Qt.AlignmentFlag.AlignVCenter)
         value_label.setMaximumWidth(50)
         value_label.setObjectName(f"vl_{item['name']}")
         sliderfactor = QLabel(f"{item['sliderfactor']}")
@@ -496,7 +496,7 @@ class SettingsLayout(QGridLayout):
             sl_layout.addWidget(slider)
             sl_layout.addWidget(p_butt)
             self.addLayout(sl_layout, i, entry_col, 1, entry_colspan)
-            self.addWidget(value_label, i, val_col, alignment=Qt.AlignVCenter)
+            self.addWidget(value_label, i, val_col, alignment=Qt.AlignmentFlag.AlignVCenter)
             self.addWidget(sliderfactor, i, fct_col)
 
             slider.blockSignals(False)
@@ -533,7 +533,7 @@ class SettingsLayout(QGridLayout):
             sl_layout.addWidget(n_slider)
             sl_layout.addWidget(p_butt)
             self.addLayout(sl_layout, i, entry_col, 1, entry_colspan)
-            self.addWidget(value_label, i, val_col, alignment=Qt.AlignVCenter)
+            self.addWidget(value_label, i, val_col, alignment=Qt.AlignmentFlag.AlignVCenter)
             self.addWidget(sliderfactor, i, fct_col)
 
             n_slider.blockSignals(False)
@@ -637,7 +637,7 @@ class SettingsLayout(QGridLayout):
             spin_box.setValue(int(item['value']))
             spin_box.blockSignals(False)
             spin_box.setMinimumWidth(80)
-            spin_box.setAlignment(Qt.AlignHCenter)
+            spin_box.setAlignment(Qt.AlignmentFlag.AlignHCenter)
             spin_box.setObjectName(f"sb_{item['name']}")
             if validvalues is None or validvalues == '':
                 pass
@@ -645,13 +645,13 @@ class SettingsLayout(QGridLayout):
                 spin_box.setMinimum(int(validvalues[0]))
                 spin_box.setMaximum(int(validvalues[1]))
             spin_box.valueChanged.connect(self.spin_box_changed)
-            self.addWidget(spin_box, i, entry_col, 1, entry_colspan, alignment=Qt.AlignLeft)
+            self.addWidget(spin_box, i, entry_col, 1, entry_colspan, alignment=Qt.AlignmentFlag.AlignLeft)
 
         if item['datatype'] == 'list' or item['datatype'] == 'anylist':
             dropbox = QComboBox()
             dropbox.setMinimumWidth(150)
             dropbox.setEditable(True)
-            dropbox.lineEdit().setAlignment(QtCore.Qt.AlignHCenter)
+            dropbox.lineEdit().setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
             dropbox.setObjectName(f"db_{item['name']}")
             dropbox.addItems(validvalues)
             dropbox.blockSignals(True)
@@ -668,7 +668,7 @@ class SettingsLayout(QGridLayout):
         if item['datatype'] == 'path':
             self.vpconf_brose_button = QPushButton()
             self.vpconf_brose_button.blockSignals(True)
-            self.vpconf_brose_button.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+            self.vpconf_brose_button.setCursor(QCursor(QtCore.Qt.CursorShape.PointingHandCursor))
             self.vpconf_brose_button.setMinimumWidth(150)
             self.vpconf_brose_button.setObjectName('path_vpconf')
             if item['value'] == '-':
@@ -684,13 +684,13 @@ class SettingsLayout(QGridLayout):
             self.vpconf_brose_button.blockSignals(False)
             self.vpconf_brose_button.setMaximumHeight(25)
             self.vpconf_brose_button.clicked.connect(self.browse_for_config)
-            self.addWidget(self.vpconf_brose_button, i, entry_col, 1, entry_colspan, alignment=Qt.AlignLeft)
+            self.addWidget(self.vpconf_brose_button, i, entry_col, 1, entry_colspan, alignment=Qt.AlignmentFlag.AlignLeft)
 
         if item['datatype'] == 'int' or item['datatype'] == 'anyfloat':
             self.addWidget(line_edit, i, entry_col, 1, entry_colspan)
 
         if item['datatype'] == 'button':
-            self.addWidget(self.usbdevice_button, i, entry_col, 1, entry_colspan, alignment=Qt.AlignLeft)
+            self.addWidget(self.usbdevice_button, i, entry_col, 1, entry_colspan, alignment=Qt.AlignmentFlag.AlignLeft)
 
         if item['datatype'] == 'configurator':
             self.configurator_button = QPushButton("Configure Gain Overrides")
@@ -704,10 +704,10 @@ class SettingsLayout(QGridLayout):
             self.configurator_button.setMinimumWidth(150)
             self.configurator_button.setMaximumHeight(25)
             self.configurator_button.setObjectName(f"config_{item['name']}")
-            self.configurator_button.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+            self.configurator_button.setCursor(QCursor(QtCore.Qt.CursorShape.PointingHandCursor))
             self.configurator_button.clicked.connect(self.configurator_button_clicked)
             erase_button.clicked.connect(self.erase_configurator_overrides)
-            self.addWidget(self.configurator_button, i, entry_col, 1, entry_colspan, alignment=Qt.AlignLeft)
+            self.addWidget(self.configurator_button, i, entry_col, 1, entry_colspan, alignment=Qt.AlignmentFlag.AlignLeft)
 
 
         if item['has_expander'] == 'true' and item['prereq'] != '':
@@ -744,7 +744,7 @@ class SettingsLayout(QGridLayout):
         # erase_button = QToolButton()
         icon = QIcon()
         pixmap = QPixmap(":/image/delete_button.png")
-        resized_pixmap = pixmap.scaled(15, 15, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        resized_pixmap = pixmap.scaled(15, 15, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
         icon.addPixmap(resized_pixmap)
 
         # Create the erase button
@@ -822,7 +822,7 @@ class SettingsLayout(QGridLayout):
     def browse_for_config(self):
         self.trigger_form_reload = False
         options = QFileDialog.Options()
-        # options |= QFileDialog.DontUseNativeDialog
+        # options |= QFileDialog.Option.DontUseNativeDialog
         calling_button = self.sender()
         starting_dir = os.getcwd()
         if calling_button:
@@ -913,11 +913,11 @@ class SettingsLayout(QGridLayout):
         self.trigger_form_reload = True
         logging.debug(f"expander {self.sender().objectName()} clicked.  value: {self.sender().text()}")
         settingname = self.sender().objectName().replace('ex_', '')
-        if self.sender().arrowType() == Qt.RightArrow:
+        if self.sender().arrowType() == Qt.ArrowType.RightArrow:
             # print ('expanded')
 
             self.expanded_items.append(settingname)
-            self.sender().setArrowType(Qt.DownArrow)
+            self.sender().setArrowType(Qt.ArrowType.DownArrow)
 
             self.reload_caller()
         else:
@@ -927,7 +927,7 @@ class SettingsLayout(QGridLayout):
                 if ex != settingname:
                     new_exp_items.append(ex)
             self.expanded_items = new_exp_items
-            self.sender().setArrowType(Qt.DownArrow)
+            self.sender().setArrowType(Qt.ArrowType.DownArrow)
 
             self.reload_caller()
 

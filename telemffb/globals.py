@@ -19,7 +19,7 @@
 
 from typing import TYPE_CHECKING, Dict
 if TYPE_CHECKING:
-    from PyQt5.QtCore import QSettings
+    from PyQt6.QtCore import QSettings
     from .LogWindow import LogWindow
     from .IPCNetworkThread import IPCNetworkThread
     from .utils import SystemSettings, ChildPopen

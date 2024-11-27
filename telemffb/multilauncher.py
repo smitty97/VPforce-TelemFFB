@@ -23,9 +23,9 @@ import subprocess
 import sys
 import winreg
 
-from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtGui import QIcon, QPixmap
-from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDialog,
+from PyQt6 import QtCore, QtWidgets
+from PyQt6.QtGui import QIcon, QPixmap
+from PyQt6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDialog,
                              QFileDialog, QLabel, QLineEdit, QPushButton,
                              QTableWidgetItem, QVBoxLayout)
 
@@ -137,4 +137,4 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     lw = LauncherWindow()
     lw.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

@@ -21,9 +21,9 @@ import json
 import logging
 import os
 
-from PyQt5 import QtCore
-from PyQt5.QtGui import QIntValidator
-from PyQt5.QtWidgets import QButtonGroup, QDialog, QFileDialog, QMessageBox
+from PyQt6 import QtCore
+from PyQt6.QtGui import QIntValidator
+from PyQt6.QtWidgets import QButtonGroup, QDialog, QFileDialog, QMessageBox
 
 from . import globals as G
 from . import utils
@@ -109,7 +109,7 @@ class SystemSettingsDialog(QDialog, Ui_SystemDialog):
         self.cb_headless_p.clicked.connect(self.toggle_launchmode_cbs)
         self.cb_headless_c.setObjectName('headless_c')
         self.cb_headless_c.clicked.connect(self.toggle_launchmode_cbs)
-        self.setWindowFlags(self.windowFlags() & ~QtCore.Qt.WindowContextHelpButtonHint)
+        self.setWindowFlags(self.windowFlags() & ~QtCore.Qt.WindowType.WindowContextHelpButtonHint)
 
         if (G.master_instance and G.launched_instances) or G.child_instance:
             self.labelSystem.setText("System (Per Instance):")
@@ -565,7 +565,7 @@ class SystemSettingsDialog(QDialog, Ui_SystemDialog):
 
     def browse_vpconf(self, mode):
         options = QFileDialog.Options()
-        # options |= QFileDialog.DontUseNativeDialog
+        # options |= QFileDialog.Option.DontUseNativeDialog
         calling_button = self.sender()
         starting_dir = os.getcwd()
         if mode == 'startup':

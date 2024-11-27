@@ -31,14 +31,14 @@ import winreg
 from collections import OrderedDict
 from datetime import datetime
 
-from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtCore import QCoreApplication, Qt, QTimer, QUrl
-from PyQt5.QtGui import (QColor, QCursor, QDesktopServices, QIcon,
-                         QKeySequence, QPixmap)
-from PyQt5.QtWidgets import (QAction, QApplication, QButtonGroup, QCheckBox,
+from PyQt6 import QtCore, QtWidgets
+from PyQt6.QtCore import QCoreApplication, Qt, QTimer, QUrl
+from PyQt6.QtGui import (QAction, QColor, QCursor, QDesktopServices, QIcon,
+                         QKeySequence, QPixmap, QShortcut)
+from PyQt6.QtWidgets import (QApplication, QButtonGroup, QCheckBox,
                              QComboBox, QFrame, QGridLayout, QGroupBox,
                              QHBoxLayout, QLabel, QMainWindow, QMessageBox,
-                             QPushButton, QScrollArea, QShortcut, QTabWidget,
+                             QPushButton, QScrollArea, QTabWidget,
                              QToolButton, QVBoxLayout, QWidget, QSpacerItem, QSizePolicy, QSystemTrayIcon, QMenu)
 
 import telemffb.globals as G
@@ -179,7 +179,7 @@ class MainWindow(QMainWindow):
         cfg_log_folder_action = QAction('Open Config/Log Directory', self)
         def do_open_cfg_dir():
             modifiers = QApplication.keyboardModifiers()
-            if (modifiers & QtCore.Qt.ControlModifier) and (modifiers & QtCore.Qt.ShiftModifier) and getattr(sys, 'frozen', False):
+            if (modifiers & QtCore.Qt.KeyboardModifier.ControlModifier) and (modifiers & QtCore.Qt.KeyboardModifier.ShiftModifier) and getattr(sys, 'frozen', False):
                 os.startfile(getattr(sys, "_MEIPASS"), 'open')
             else:
                 os.startfile(G.userconfig_rootpath, 'open')
@@ -309,8 +309,8 @@ class MainWindow(QMainWindow):
 
         # Create a line beneath the menu bar
         line = QFrame()
-        line.setFrameShape(QFrame.HLine)
-        line.setFrameShadow(QFrame.Sunken)
+        line.setFrameShape(QFrame.Shape.HLine)
+        line.setFrameShadow(QFrame.Shadow.Sunken)
 
         # Add the line to the menu frame layout
         menu_frame_layout.addWidget(menubar)
@@ -345,14 +345,14 @@ class MainWindow(QMainWindow):
 
            
         # Add the image labels to the layout
-        logo_status_layout.addWidget(self.logo_stack, alignment=Qt.AlignVCenter | Qt.AlignLeft)
+        logo_status_layout.addWidget(self.logo_stack, alignment=Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft)
 
         rh_status_area = QWidget()
         rh_status_layout = QVBoxLayout()
 
         sim_status_area = QWidget()
         status_layout = QHBoxLayout()
-        status_layout.setAlignment(Qt.AlignLeft)
+        status_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
         self.dcs_label_icon = SimStatusLabel("DCS")
         self.il2_label_icon = SimStatusLabel("IL2")
@@ -360,11 +360,11 @@ class MainWindow(QMainWindow):
         self.xplane_label_icon = SimStatusLabel("X-PLANE")
 
         status_layout.addWidget(self.dcs_label_icon)
-        status_layout.addItem(QSpacerItem(40, 20, QSizePolicy.Preferred, QSizePolicy.Minimum))
+        status_layout.addItem(QSpacerItem(40, 20, QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum))
         status_layout.addWidget(self.il2_label_icon)
-        status_layout.addItem(QSpacerItem(40, 20, QSizePolicy.Preferred, QSizePolicy.Minimum))
+        status_layout.addItem(QSpacerItem(40, 20, QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum))
         status_layout.addWidget(self.msfs_label_icon)
-        status_layout.addItem(QSpacerItem(40, 20, QSizePolicy.Preferred, QSizePolicy.Minimum))
+        status_layout.addItem(QSpacerItem(40, 20, QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum))
         status_layout.addWidget(self.xplane_label_icon)
 
         self.label_icons = {
@@ -392,34 +392,34 @@ class MainWindow(QMainWindow):
         G.sim_listeners.simStarted.connect(on_sims_changed)
         G.sim_listeners.simStopped.connect(on_sims_changed)
 
-        status_layout.setAlignment(Qt.AlignRight)
+        status_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
 
         sim_status_area.setLayout(status_layout)
 
         rh_status_layout.addWidget(sim_status_area)
 
-        rh_status_layout.setAlignment(Qt.AlignRight)
+        rh_status_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
 
         ############
         # current craft
         self.craft_container = QWidget()
         self.craft_layout = QVBoxLayout(self.craft_container)
-        self.craft_layout.setAlignment(Qt.AlignLeft)
+        self.craft_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
         cur_ac_lbl = QLabel()
         cur_ac_lbl.setText("<b>Current Aircraft:</b>")
-        cur_ac_lbl.setAlignment(Qt.AlignLeft)
+        cur_ac_lbl.setAlignment(Qt.AlignmentFlag.AlignLeft)
         cur_ac_lbl.setStyleSheet("QLabel { padding-left: 10px; padding-top: 2px; }")
 
         self.cur_craft = QLabel()
         self.cur_craft.setText('Unknown')
         self.cur_craft.setStyleSheet("QLabel { padding-left: 15px; padding-top: 2px; font-family: Courier New; }")
-        self.cur_craft.setAlignment(Qt.AlignLeft)
+        self.cur_craft.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
         self.cur_pattern = QLabel()
         self.cur_pattern.setText('(No Match)')
         self.cur_pattern.setStyleSheet("QLabel { padding-left: 15px; padding-top: 2px; font-family: Courier New; }")
-        self.cur_pattern.setAlignment(Qt.AlignLeft)
+        self.cur_pattern.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
         self.craft_layout.addWidget(cur_ac_lbl)
         self.craft_layout.addWidget(self.cur_craft)
@@ -455,7 +455,7 @@ class MainWindow(QMainWindow):
                             padding: 5px;
                         }"""
         self.new_craft_button.setStyleSheet(ncb_css)
-        self.new_craft_button.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+        self.new_craft_button.setCursor(QCursor(QtCore.Qt.CursorShape.PointingHandCursor))
         new_craft_layout.addWidget(self.new_craft_button)
         new_craft_layout.addSpacing(7)
         self.new_craft_button.clicked.connect(self.show_user_model_dialog)
@@ -469,7 +469,7 @@ class MainWindow(QMainWindow):
         test_craft_layout = QHBoxLayout()
         test_sim_lbl = QLabel('Sim:')
         test_sim_lbl.setMaximumWidth(30)
-        test_sim_lbl.setAlignment(Qt.AlignRight)
+        test_sim_lbl.setAlignment(Qt.AlignmentFlag.AlignRight)
         sims = ['', 'DCS', 'IL2', 'MSFS', 'XPLANE']
         self.test_sim = QComboBox()
         self.test_sim.setMaximumWidth(60)
@@ -477,7 +477,7 @@ class MainWindow(QMainWindow):
         self.test_sim.currentTextChanged.connect(self.test_sim_changed)
         test_name_lbl = QLabel('Aircraft Name:')
         test_name_lbl.setMaximumWidth(90)
-        test_name_lbl.setAlignment(Qt.AlignRight)
+        test_name_lbl.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.test_name = QComboBox()
         self.test_name.setMinimumWidth(100)
         self.test_name.setEditable(False)
@@ -513,9 +513,9 @@ class MainWindow(QMainWindow):
         layout.addLayout(self.config_scope_row)
 
         self.tab_widget = QTabWidget(self)
-        self.tab_widget.setTabShape(QTabWidget.Triangular)  # Set triangular tab shape
+        self.tab_widget.setTabShape(QTabWidget.TabShape.Triangular)  # Set triangular tab shape
         # self.tab_widget.addTab(QWidget(), "Log")
-        # self.tab_widget.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+        # self.tab_widget.setCursor(QCursor(QtCore.Qt.CursorShape.PointingHandCursor))
 
         # Set the main window area height to 0
         self.tab_widget.setMinimumHeight(14)
@@ -532,8 +532,8 @@ class MainWindow(QMainWindow):
 
         # Create a horizontal line widget
         self.line_widget = QFrame(self)
-        self.line_widget.setFrameShape(QFrame.HLine)
-        self.line_widget.setFrameShadow(QFrame.Sunken)
+        self.line_widget.setFrameShape(QFrame.Shape.HLine)
+        self.line_widget.setFrameShadow(QFrame.Shadow.Sunken)
 
         # Add the tab widget and line widget to the main layout
         layout.addWidget(self.tab_widget)
@@ -559,9 +559,9 @@ class MainWindow(QMainWindow):
 
         self.refresh_telem_status()
 
-        self.lbl_telem_data.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.lbl_telem_data.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.lbl_telem_data.setWordWrap(False)
-        self.lbl_telem_data.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+        self.lbl_telem_data.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
         self.lbl_telem_data.setStyleSheet("""
             padding: 2px;
             font-family: Courier New;
@@ -572,7 +572,7 @@ class MainWindow(QMainWindow):
 
         self.lbl_effects_data = QLabel()
         self.effects_area.setWidget(self.lbl_effects_data)
-        self.lbl_effects_data.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+        self.lbl_effects_data.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
         self.lbl_effects_data.setStyleSheet("""
             padding: 2px;
             font-family: Courier New;
@@ -655,12 +655,12 @@ class MainWindow(QMainWindow):
             f_vers = 'error fetching'
         self.firmware_label.setText(f'Rhino Firmware: {f_vers}')
 
-        self.version_label.setAlignment(Qt.AlignLeft)
-        self.firmware_label.setAlignment(Qt.AlignRight)
+        self.version_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.firmware_label.setAlignment(Qt.AlignmentFlag.AlignRight)
         version_row_layout.addWidget(self.version_label)
         version_row_layout.addWidget(self.firmware_label)
 
-        version_row_layout.setAlignment(Qt.AlignBottom)
+        version_row_layout.setAlignment(Qt.AlignmentFlag.AlignBottom)
         layout.addLayout(version_row_layout)
 
         # self.test_button = QPushButton("SEND TEST MESSAGE")
@@ -708,7 +708,7 @@ class MainWindow(QMainWindow):
 
         def do_show_main_window(trigger):
             if isinstance(trigger, QSystemTrayIcon.ActivationReason):
-                if trigger == QSystemTrayIcon.DoubleClick:
+                if trigger == QSystemTrayIcon.ActivationReason.DoubleClick:
                     self.showNormal()  # Restore the window to its normal state if minimized
                     self.show()
                     self.raise_()
@@ -888,7 +888,7 @@ class MainWindow(QMainWindow):
         teleplot_action = QAction("Teleplot Setup", self)
         def do_open_teleplot_setup_dialog():
             dialog = TeleplotSetupDialog(self)
-            dialog.exec_()
+            dialog.exec()
         teleplot_action.triggered.connect(do_open_teleplot_setup_dialog)
         debug_menu.addAction(teleplot_action)
 
@@ -916,7 +916,7 @@ class MainWindow(QMainWindow):
             dialog.raise_()
             dialog.activateWindow()
             dialog.show()
-        # dialog.exec_()
+        # dialog.exec()
         sc_overrides_action.triggered.connect(do_open_sc_override_dialog)
         debug_menu.addAction(sc_overrides_action)
 
@@ -943,9 +943,9 @@ class MainWindow(QMainWindow):
         G.ipc_instance.send_broadcast_message("SHOW SETTINGS")
 
     def reset_user_config(self):
-        ans = QMessageBox.warning(self, "Caution", "Are you sure you want to proceed?  All contents of your user configuration will be erased\n\nA backup of the configuration will be generated containing the current timestamp.", QMessageBox.Ok | QMessageBox.Cancel)
+        ans = QMessageBox.warning(self, "Caution", "Are you sure you want to proceed?  All contents of your user configuration will be erased\n\nA backup of the configuration will be generated containing the current timestamp.", QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
 
-        if ans == QMessageBox.Ok:
+        if ans == QMessageBox.StandardButton.Ok:
             try:
                 # Get the current timestamp
                 timestamp = datetime.now().strftime('%Y%m%d_%H%M')
@@ -1231,7 +1231,7 @@ class MainWindow(QMainWindow):
             dialog.show()
         except Exception:
             logging.exception("Exception")
-        # dialog.exec_()
+        # dialog.exec()
 
     def update_settings(self):
         # caller_frame = inspect.currentframe().f_back
@@ -1251,9 +1251,9 @@ class MainWindow(QMainWindow):
     def reset_all_effects(self):
         result = QMessageBox.warning(self, "Are you sure?", "*** Only use this if you have effects which are 'stuck' ***\n\n  Proceeding will result in the destruction"
                                                             " of any effects which are currently being generated by the simulator and may result in requiring a restart of"
-                                                            " the sim or a new session.\n\n~~ Proceed with caution ~~", QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
+                                                            " the sim or a new session.\n\n~~ Proceed with caution ~~", QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel, QMessageBox.StandardButton.Cancel)
 
-        if result == QMessageBox.Ok:
+        if result == QMessageBox.StandardButton.Ok:
             try:
                 HapticEffect.device.reset_effects()
             except Exception:
@@ -1262,7 +1262,7 @@ class MainWindow(QMainWindow):
     def toggle_settings_window(self, dbg=False):
         try:
             modifiers = QApplication.keyboardModifiers()
-            if ((modifiers & QtCore.Qt.ControlModifier) and (modifiers & QtCore.Qt.ShiftModifier)) or dbg:
+            if ((modifiers & QtCore.Qt.KeyboardModifier.ControlModifier) and (modifiers & QtCore.Qt.KeyboardModifier.ShiftModifier)) or dbg:
                 if self.test_craft_area.isVisible():
                     self.test_craft_area.hide()
                 else:
@@ -1281,8 +1281,8 @@ class MainWindow(QMainWindow):
     def show_user_model_dialog(self):
         current_aircraft = self.cur_craft.text()
         dialog = UserModelDialog(G.settings_mgr.current_sim, current_aircraft, G.settings_mgr.current_class, self)
-        result = dialog.exec_()
-        if result == QtWidgets.QDialog.Accepted:
+        result = dialog.exec()
+        if result == QtWidgets.QDialog.DialogCode.Accepted:
             # Handle accepted
             new_aircraft = dialog.tb_current_aircraft.currentText()
             if new_aircraft == current_aircraft:
@@ -1384,7 +1384,7 @@ class MainWindow(QMainWindow):
         elif index == 1:  # Settings Tab
             self.current_tab_index = 1
             modifiers = QApplication.keyboardModifiers()
-            if (modifiers & QtCore.Qt.ControlModifier) and (modifiers & QtCore.Qt.ShiftModifier):
+            if (modifiers & QtCore.Qt.KeyboardModifier.ControlModifier) and (modifiers & QtCore.Qt.KeyboardModifier.ShiftModifier):
                 self.cb_joystick.setVisible(True)
                 self.cb_pedals.setVisible(True)
                 self.cb_collective.setVisible(True)
@@ -1615,8 +1615,8 @@ class MainWindow(QMainWindow):
         ignore_auto_updates = G.system_settings.get('ignoreUpdate', False)
         if not auto:
             ignore_auto_updates = False
-        update_ans = QMessageBox.No
-        proceed_ans = QMessageBox.Cancel
+        update_ans = QMessageBox.StandardButton.No
+        proceed_ans = QMessageBox.StandardButton.Cancel
         try:
             updater_execution_path = os.path.join(utils.get_script_path(), 'updater.exe')
             if os.path.exists(updater_execution_path):
@@ -1632,18 +1632,18 @@ class MainWindow(QMainWindow):
 
         if self._update_available:
             # vers, url = utils.fetch_latest_version()
-            update_ans = QMessageBox.Yes
+            update_ans = QMessageBox.StandardButton.Yes
             if auto:
                 update_ans = QMessageBox.information(self, "Update Available!!",
                                                      f"A new version of TelemFFB is available ({self.latest_version}).\n\nWould you like to automatically download and install it now?\n\nYou may also update later from the Utilities menu, or the\nnext time TelemFFB starts.\n\n~~ Note ~~ If you no longer wish to see this message on startup,\nyou may enable `ignore_auto_updates` in your user config.\n\nYou will still be able to update via the Utilities menu",
-                                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                                                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
 
-            if update_ans == QMessageBox.Yes:
+            if update_ans == QMessageBox.StandardButton.Yes:
                 proceed_ans = QMessageBox.information(self, "TelemFFB Updater",
                                                       f"TelemFFB will now exit and launch the updater.\n\nOnce the update is complete, TelemFFB will restart.\n\n~~ Please Note~~~  The primary `config.ini` file will be overwritten.  If you\nhave made changes to `config.ini`, please back up the file or move the modifications to a user config file before upgrading.\n\nPress OK to continue",
-                                                      QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
+                                                      QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel, QMessageBox.StandardButton.Cancel)
 
-            if proceed_ans == QMessageBox.Ok:
+            if proceed_ans == QMessageBox.StandardButton.Ok:
                 updater_execution_path = os.path.join(utils.get_script_path(), 'updater.exe')
                 shutil.copy(sys.argv[0], updater_execution_path)
 

@@ -18,7 +18,7 @@
 
 import sys
 
-from PyQt5.QtGui import QIcon
+from PyQt6.QtGui import QIcon
 
 from telemffb.CmdLineArgs import CmdLineArgs
 
@@ -36,9 +36,9 @@ import subprocess
 import traceback
 from datetime import datetime
 
-from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtCore import QCoreApplication
-from PyQt5.QtWidgets import QApplication, QMessageBox, QPlainTextEdit
+from PyQt6 import QtCore, QtWidgets
+from PyQt6.QtCore import QCoreApplication, Qt
+from PyQt6.QtWidgets import QApplication, QMessageBox, QPlainTextEdit
 
 import resources
 import telemffb.globals as G
@@ -96,8 +96,8 @@ def launch_children():
 
 
 def main():
-    QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True) #enable highdpi scaling
-    QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)  #use highdpi icons
+    #QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True) #enable highdpi scaling
+    #QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)  #use highdpi icons
     
     dev : FFBRhino = None
 
@@ -117,7 +117,7 @@ def main():
     if G.master_instance:
         # Attempt to acquire a mutex lock.  If the acquisition fails, another master instance of TelemFFB is already running.
         msg_box = QMessageBox()
-        msg_box.setIcon(QMessageBox.Warning)
+        msg_box.setIcon(QMessageBox.Icon.Warning)
         msg_box.setWindowTitle("TelemFFB is already running")
         msg_box.setText(
             "TelemFFB is already running and cannot be started.  If you don't see the 'VP' icon in the system tray, "
@@ -127,10 +127,10 @@ def main():
         try:
             mutex = NamedMutex("VPforce_TelemFFB_Master_Instance", acquired=True, timeout=1)
             if not mutex.acquired:
-                msg_box.exec_()
+                msg_box.exec()
                 sys.exit(1)
         except WindowsError:
-            msg_box.exec_()
+            msg_box.exec()
             sys.exit(1)
 
     G.child_instance = G.args.child
@@ -327,7 +327,7 @@ def main():
     except Exception:
         logging.exception("Error Reading user config file..")
         ans = QMessageBox.question(None, "User Config Error", "There was an error reading the userconfig.  The file is likely corrupted.\n\nDo you want to back-up the existing config and create a new default (empty) config?\n\nIf you chose No, TelemFFB will exit.")
-        if ans == QMessageBox.Yes:
+        if ans == QMessageBox.StandardButton.Yes:
             # Get the current timestamp
             timestamp = datetime.now().strftime('%Y%m%d_%H%M')
 
@@ -480,7 +480,7 @@ def main():
 
     G.sim_listeners.start_all()
 
-    app.exec_()
+    app.exec()
 
     if G.ipc_instance:
         G.ipc_instance.notify_close_children()

@@ -1,5 +1,5 @@
-from PyQt5.QtCore import QCoreApplication, QMetaObject, QRect, Qt
-from PyQt5.QtWidgets import QDialogButtonBox, QGridLayout, QHBoxLayout, QLabel, QPlainTextEdit, QPushButton, QSizePolicy, QSpacerItem, QSplitter, QWidget, QLineEdit, QPushButton
+from PyQt6.QtCore import QCoreApplication, QMetaObject, QRect, Qt
+from PyQt6.QtWidgets import QDialogButtonBox, QGridLayout, QHBoxLayout, QLabel, QPlainTextEdit, QPushButton, QSizePolicy, QSpacerItem, QSplitter, QWidget, QLineEdit, QPushButton
 
 
 class Ui_TeleplotDialog(object):
@@ -21,7 +21,7 @@ class Ui_TeleplotDialog(object):
         self.tb_port = QLineEdit(self.layoutWidget)
         self.tb_port.setObjectName(u"tb_port")
 
-        self.gridLayout.addWidget(self.tb_port, 2, 0, 1, 1, Qt.AlignLeft)
+        self.gridLayout.addWidget(self.tb_port, 2, 0, 1, 1, Qt.AlignmentFlag.AlignLeft)
 
         self.label_3 = QLabel(self.layoutWidget)
         self.label_3.setObjectName(u"label_3")
@@ -45,7 +45,7 @@ class Ui_TeleplotDialog(object):
 
         self.splitter = QSplitter(self.layoutWidget)
         self.splitter.setObjectName(u"splitter")
-        self.splitter.setOrientation(Qt.Horizontal)
+        self.splitter.setOrientation(Qt.Orientation.Horizontal)
         self.label_6 = QLabel(self.splitter)
         self.label_6.setObjectName(u"label_6")
         self.splitter.addWidget(self.label_6)
@@ -67,22 +67,22 @@ class Ui_TeleplotDialog(object):
         self.pb_clear = QPushButton(self.layoutWidget1)
         self.pb_clear.setObjectName(u"pb_clear")
 
-        self.horizontalLayout.addWidget(self.pb_clear, 0, Qt.AlignLeft)
+        self.horizontalLayout.addWidget(self.pb_clear, 0, Qt.AlignmentFlag.AlignLeft)
 
-        self.horizontalSpacer_2 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.horizontalSpacer_2 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         self.horizontalLayout.addItem(self.horizontalSpacer_2)
 
-        self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         self.horizontalLayout.addItem(self.horizontalSpacer)
 
         self.buttonBox = QDialogButtonBox(self.layoutWidget1)
         self.buttonBox.setObjectName(u"buttonBox")
-        self.buttonBox.setOrientation(Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QDialogButtonBox.Cancel|QDialogButtonBox.Save)
+        self.buttonBox.setOrientation(Qt.Orientation.Horizontal)
+        self.buttonBox.setStandardButtons(QDialogButtonBox.StandardButton.Cancel|QDialogButtonBox.StandardButton.Save)
 
-        self.horizontalLayout.addWidget(self.buttonBox, 0, Qt.AlignRight)
+        self.horizontalLayout.addWidget(self.buttonBox, 0, Qt.AlignmentFlag.AlignRight)
 
 
         self.retranslateUi(TeleplotDialog)

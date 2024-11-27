@@ -17,13 +17,13 @@
 #
 
 
-from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QScrollArea, QHBoxLayout, QSlider, QCheckBox, QFrame
-from PyQt5.QtCore import pyqtSignal, Qt, QSize, QRect, QPointF, QPropertyAnimation, QRectF, QPoint, \
+from PyQt6 import QtWidgets, QtCore
+from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QScrollArea, QHBoxLayout, QSlider, QCheckBox, QFrame
+from PyQt6.QtCore import pyqtSignal, Qt, QSize, QRect, QPointF, QPropertyAnimation, QRectF, QPoint, \
     QSequentialAnimationGroup, QEasingCurve, pyqtSlot, pyqtProperty, QTimer
-from PyQt5.QtGui import QPixmap, QPainter, QColor, QCursor, QGuiApplication, QBrush, QPen, QPaintEvent, QRadialGradient, \
+from PyQt6.QtGui import QPixmap, QPainter, QColor, QCursor, QGuiApplication, QBrush, QPen, QPaintEvent, QRadialGradient, \
     QLinearGradient, QFont
-from PyQt5.QtWidgets import QStyle, QStyleOptionSlider
+from PyQt6.QtWidgets import QStyle, QStyleOptionSlider
 
 import telemffb.globals as G
 from telemffb.utils import HiDpiPixmap
@@ -37,7 +37,7 @@ class NoKeyScrollArea(QScrollArea):
         super().__init__()
 
         self.sliders = []
-        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
+        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
 
     def addSlider(self, slider):
         self.sliders.append(slider)
@@ -63,7 +63,7 @@ class SliderWithLabel(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.slider = QSlider(Qt.Horizontal)
+        self.slider = QSlider(Qt.Orientation.Horizontal)
         self.slider.setMinimum(0)
         self.slider.setMaximum(100)
         self.slider.setValue(50)
@@ -104,11 +104,11 @@ class NoWheelSlider(QSlider):
         self.handle_color = vpf_purple
         self.handle_height = 20
         self.handle_width = 16
-        self.setCursor(QCursor(Qt.PointingHandCursor))
+        self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         # Apply styles
         self.update_styles()
 
-        self.setFocusPolicy(Qt.StrongFocus)
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.setMouseTracking(True)
         self.is_mouse_over = False
         self._delay = 200  # Delay in milliseconds
@@ -125,7 +125,7 @@ class NoWheelSlider(QSlider):
         self.delayedValueChanged.emit(self.value())
 
     def wheelEvent(self, event):
-        if event.modifiers() & Qt.ShiftModifier:
+        if event.modifiers() & Qt.KeyboardModifier.ShiftModifier:
             # Adjust the value by increments of 1
             current_value = self.value()
             if event.angleDelta().y() > 0:
@@ -232,7 +232,7 @@ class NoWheelNumberSlider(NoWheelSlider):
         handle_rect.setWidth(self.handle_width)
 
         # Calculate the correct position for the handle based on the slider value
-        if self.orientation() == Qt.Horizontal:
+        if self.orientation() == Qt.Orientation.Horizontal:
             handle_x = self.style().sliderPositionFromValue(self.minimum(), self.maximum(), self.value(),
                                                             self.width() - self.handle_width)
             handle_rect.moveLeft(handle_x)
@@ -242,20 +242,20 @@ class NoWheelNumberSlider(NoWheelSlider):
             handle_rect.moveTop(handle_y)
 
         # Ensure the painter uses anti-aliasing for smoother text rendering
-        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
         # Calculate the bounding rectangle for the text
-        text_rect = painter.boundingRect(handle_rect, Qt.AlignCenter, self.value_text)
+        text_rect = painter.boundingRect(handle_rect, Qt.AlignmentFlag.AlignCenter, self.value_text)
 
         # Draw the text inside the handle
-        painter.setPen(Qt.white)
-        painter.drawText(text_rect, Qt.AlignCenter, self.value_text)
+        painter.setPen(Qt.GlobalColor.white)
+        painter.drawText(text_rect, Qt.AlignmentFlag.AlignCenter, self.value_text)
 
         painter.end()
 
     def initStyleOption(self, option):
         option.initFrom(self)
-        option.subControls = QStyle.SC_SliderHandle | QStyle.SC_SliderGroove
+        option.subControls = QStyle.SubControl.SC_SliderHandle | QStyle.SubControl.SC_SliderGroove
         option.orientation = self.orientation()
         option.minimum = self.minimum()
         option.maximum = self.maximum()
@@ -279,9 +279,9 @@ class ClickLogo(QLabel):
     def setClickable(self, clickable):
         self._clickable = clickable
         if clickable:
-            self.setCursor(Qt.PointingHandCursor)
+            self.setCursor(Qt.CursorShape.PointingHandCursor)
         else:
-            self.setCursor(Qt.ArrowCursor)
+            self.setCursor(Qt.CursorShape.ArrowCursor)
 
     def mousePressEvent(self, event):
         if self._clickable:
@@ -289,11 +289,11 @@ class ClickLogo(QLabel):
 
     def enterEvent(self, event):
         if self._clickable:
-            self.setCursor(Qt.PointingHandCursor)
+            self.setCursor(Qt.CursorShape.PointingHandCursor)
         super().enterEvent(event)
 
     def leaveEvent(self, event):
-        self.setCursor(Qt.ArrowCursor)
+        self.setCursor(Qt.CursorShape.ArrowCursor)
         super().leaveEvent(event)
 
 
@@ -311,14 +311,14 @@ class InfoLabel(QWidget):
         # icon_img = os.path.join(script_dir, "image/information.png")
         icon_img = ":/image/information.png"
         self.pixmap = HiDpiPixmap(icon_img)
-        self.icon_label.setPixmap(self.pixmap.scaled(12, 12, Qt.KeepAspectRatio, Qt.SmoothTransformation))  # Adjust the height as needed
+        self.icon_label.setPixmap(self.pixmap.scaled(12, 12, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))  # Adjust the height as needed
         self.icon_label.setVisible(False)
 
         # Layout to align the text label and icon
         self.layout = QHBoxLayout(self)
-        self.layout.addWidget(self.text_label, alignment=Qt.AlignLeft)
+        self.layout.addWidget(self.text_label, alignment=Qt.AlignmentFlag.AlignLeft)
         self.layout.addSpacing(0)
-        self.layout.addWidget(self.icon_label, alignment=Qt.AlignLeft)
+        self.layout.addWidget(self.icon_label, alignment=Qt.AlignmentFlag.AlignLeft)
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.addStretch()
 
@@ -355,7 +355,7 @@ class InfoLabel(QWidget):
 class StatusLabel(QWidget):
     clicked = pyqtSignal(str)
 
-    def __init__(self, parent=None, text='', color: QColor = Qt.yellow, size=10):
+    def __init__(self, parent=None, text='', color: QColor = Qt.GlobalColor.yellow, size=10):
         super(StatusLabel, self).__init__(parent)
 
         self.label = QLabel(text)
@@ -363,7 +363,7 @@ class StatusLabel(QWidget):
 
         self.dot_color = color  # Default color
         self.dot_size = size
-        self.setCursor(Qt.PointingHandCursor)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
         self._clickable = True
         self.setToolTip('Click to manage this device')
         layout = QHBoxLayout(self)
@@ -399,7 +399,7 @@ class StatusLabel(QWidget):
 
     def paintEvent(self, event):
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
         # Calculate adjusted positioning for the dot
         dot_x = self.label.geometry().right() - 1  # 5 is an arbitrary offset for better alignment
@@ -414,8 +414,8 @@ class StatusLabel(QWidget):
         total_size = self.dot_size + 2 * total_thickness
 
         # Draw the outermost black ring
-        painter.setBrush(Qt.black)
-        painter.setPen(Qt.NoPen)
+        painter.setBrush(Qt.GlobalColor.black)
+        painter.setPen(Qt.PenStyle.NoPen)
         painter.drawEllipse(dot_x - total_thickness, dot_y - total_thickness, total_size, total_size)
 
         # Draw the metallic grey ring
@@ -438,7 +438,7 @@ class StatusLabel(QWidget):
         gradient.setColorAt(1, QColor(self.dot_color).darker(200))  # Increase darkness for stronger shadow
 
         painter.setBrush(gradient)
-        painter.setPen(Qt.NoPen)
+        painter.setPen(Qt.PenStyle.NoPen)
         painter.drawEllipse(dot_x, dot_y, self.dot_size, self.dot_size)
 
         painter.end()
@@ -456,15 +456,15 @@ class SimStatusLabel(QWidget):
         self.error_message = None
 
         self.lbl = QLabel(name)
-        # font = QFont("xxxxxx", weight=QFont.Bold)
+        # font = QFont("xxxxxx", weight=QFont.Weight.Bold)
         #
         # # Set the font to the label
         # self.lbl.setFont(font)
 
-        self.lbl.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+        self.lbl.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
 
         self.pix = QLabel()
-        self.pix.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+        self.pix.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
 
         enable_color = QColor(255, 235, 0)
         disable_color = QColor(128, 128, 128) # grey
@@ -479,7 +479,7 @@ class SimStatusLabel(QWidget):
         self.error_pixmap = self.create_status_icon(error_color, self.icon_size, icon_type="exclamation")
 
         v_layout = QVBoxLayout()
-        v_layout.setAlignment(Qt.AlignLeft)
+        v_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.setLayout(v_layout)
         v_layout.addWidget(self.lbl)
         v_layout.addWidget(self.pix)
@@ -547,11 +547,11 @@ class SimStatusLabel(QWidget):
 
     def create_status_icon(self, color, size: QSize, icon_type="colored"):
         pixmap = QPixmap(size)
-        pixmap.fill(Qt.transparent)
+        pixmap.fill(Qt.GlobalColor.transparent)
 
         painter = QPainter(pixmap)
-        painter.setRenderHint(QPainter.Antialiasing, 1)
-        painter.setRenderHint(QPainter.SmoothPixmapTransform, 1)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, 1)
+        painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, 1)
 
         # Define thicknesses
         outer_black_thickness = 1
@@ -568,7 +568,7 @@ class SimStatusLabel(QWidget):
         outer_ring_gradient.setColorAt(1, outer_ring_color.darker(200))
 
         painter.setBrush(outer_ring_gradient)
-        painter.setPen(Qt.NoPen)
+        painter.setPen(Qt.PenStyle.NoPen)
         painter.drawEllipse(0, 0, size.width(), size.height())
 
         # Draw the metallic grey ring
@@ -601,7 +601,7 @@ class SimStatusLabel(QWidget):
         dot_gradient.setColorAt(1, color.darker(200))  # Increase darkness for stronger shadow
 
         painter.setBrush(dot_gradient)
-        painter.setPen(Qt.NoPen)
+        painter.setPen(Qt.PenStyle.NoPen)
         painter.drawEllipse(total_thickness, total_thickness, size.width() - 2 * total_thickness,
                             size.height() - 2 * total_thickness)
 
@@ -615,7 +615,7 @@ class SimStatusLabel(QWidget):
             line_y = int((size.height() - line_length) / 2)
 
             # Draw the white pause lines
-            painter.setPen(QPen(Qt.white, line_width))
+            painter.setPen(QPen(Qt.GlobalColor.white, line_width))
             painter.drawLine(line1_x, line_y, line1_x, line_y + line_length)
             painter.drawLine(line2_x, line_y, line2_x, line_y + line_length)
 
@@ -631,7 +631,7 @@ class SimStatusLabel(QWidget):
             line2_end = QPointF(total_thickness + offset, size.height() - total_thickness - offset)
 
             # Draw the white 'X' lines
-            painter.setPen(QPen(Qt.white, line_width))
+            painter.setPen(QPen(Qt.GlobalColor.white, line_width))
             painter.drawLine(line1_start, line1_end)
             painter.drawLine(line2_start, line2_end)
 
@@ -646,9 +646,9 @@ class SimStatusLabel(QWidget):
             line_y2 = line_y1 + line_length
 
             # Draw the white exclamation mark
-            painter.setPen(QPen(Qt.white, line_width))
+            painter.setPen(QPen(Qt.GlobalColor.white, line_width))
             painter.drawLine(line_x, line_y1, line_x, line_y2)
-            painter.setBrush(QBrush(Qt.white))
+            painter.setBrush(QBrush(Qt.GlobalColor.white))
             painter.drawEllipse(QPointF(line_x, line_y2 + dot_radius + 4), dot_radius, dot_radius)  # Move the dot down
 
         painter.end()
@@ -658,15 +658,15 @@ class SimStatusLabel(QWidget):
 class Toggle(QCheckBox):
     """Borrowed from qtwidgets library: https://github.com/pythonguis/python-qtwidgets
     Modified default behavior to support simple checkbox widget replacement in QT designer"""
-    _transparent_pen = QPen(Qt.transparent)
-    _light_grey_pen = QPen(Qt.lightGray)
+    _transparent_pen = QPen(Qt.GlobalColor.transparent)
+    _light_grey_pen = QPen(Qt.GlobalColor.lightGray)
 
     def __init__(self,
                  parent=None,
                  bar_color=QColor("#44ab37c8"),
                  checked_color="#ab37c8",
-                 handle_color=Qt.white,
-                 disabled_color=Qt.gray):
+                 handle_color=Qt.GlobalColor.white,
+                 disabled_color=Qt.GlobalColor.gray):
         super().__init__(parent)
 
         # Save our properties on the object via self, so we can access them later
@@ -701,7 +701,7 @@ class Toggle(QCheckBox):
         handleRadius = round(0.24 * contRect.height())
 
         p = QPainter(self)
-        p.setRenderHint(QPainter.Antialiasing)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
 
         p.setPen(self._transparent_pen)
         barRect = QRectF(
@@ -821,14 +821,14 @@ class LabeledToggle(QWidget):
 
 class AnimatedToggle(QCheckBox):
     """Borrowed from qtwidgets library: https://github.com/pythonguis/python-qtwidgets"""
-    _transparent_pen = QPen(Qt.transparent)
-    _light_grey_pen = QPen(Qt.lightGray)
+    _transparent_pen = QPen(Qt.GlobalColor.transparent)
+    _light_grey_pen = QPen(Qt.GlobalColor.lightGray)
 
     def __init__(self,
         parent=None,
-        bar_color=Qt.gray,
+        bar_color=Qt.GlobalColor.gray,
         checked_color="#ab37c8",
-        handle_color=Qt.white,
+        handle_color=Qt.GlobalColor.white,
         pulse_unchecked_color="#44999999",
         pulse_checked_color="#44#ab37c8"
         ):
@@ -852,7 +852,7 @@ class AnimatedToggle(QCheckBox):
         self._pulse_radius = 0
 
         self.animation = QPropertyAnimation(self, b"handle_position", self)
-        self.animation.setEasingCurve(QEasingCurve.InOutCubic)
+        self.animation.setEasingCurve(QEasingCurve.Type.InOutCubic)
         self.animation.setDuration(200)  # time in ms
 
         self.pulse_anim = QPropertyAnimation(self, b"pulse_radius", self)
@@ -887,7 +887,7 @@ class AnimatedToggle(QCheckBox):
         handleRadius = round(0.24 * contRect.height())
 
         p = QPainter(self)
-        p.setRenderHint(QPainter.Antialiasing)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
 
         p.setPen(self._transparent_pen)
         barRect = QRectF(
@@ -955,10 +955,10 @@ class InstanceStatusRow(QWidget):
         super().__init__()
 
         self.instance_status_row = QHBoxLayout()
-        self.master_status_icon = StatusLabel(None, f'This Instance({ G.device_type.capitalize() }):', Qt.green, 8)
-        self.joystick_status_icon = StatusLabel(None, 'Joystick:', Qt.yellow, 8)
-        self.pedals_status_icon = StatusLabel(None, 'Pedals:', Qt.yellow, 8)
-        self.collective_status_icon = StatusLabel(None, 'Collective:', Qt.yellow, 8)
+        self.master_status_icon = StatusLabel(None, f'This Instance({ G.device_type.capitalize() }):', Qt.GlobalColor.green, 8)
+        self.joystick_status_icon = StatusLabel(None, 'Joystick:', Qt.GlobalColor.yellow, 8)
+        self.pedals_status_icon = StatusLabel(None, 'Pedals:', Qt.GlobalColor.yellow, 8)
+        self.collective_status_icon = StatusLabel(None, 'Collective:', Qt.GlobalColor.yellow, 8)
 
         self.status_icons = {
             "joystick" : self.joystick_status_icon,
@@ -979,7 +979,7 @@ class InstanceStatusRow(QWidget):
         self.pedals_status_icon.hide()
         self.collective_status_icon.hide()
 
-        self.instance_status_row.setAlignment(Qt.AlignLeft | Qt.AlignBottom)
+        self.instance_status_row.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignBottom)
         self.instance_status_row.setSpacing(10)
 
         self.setLayout(self.instance_status_row)
@@ -990,8 +990,8 @@ class InstanceStatusRow(QWidget):
     def set_status(self, device, status):
         status_icon = self.status_icons[device]
         if status == 'ACTIVE':
-            status_icon.set_dot_color(Qt.green)
+            status_icon.set_dot_color(Qt.GlobalColor.green)
         elif status == 'TIMEOUT':
-            status_icon.set_dot_color(Qt.red)
+            status_icon.set_dot_color(Qt.GlobalColor.red)
         else:
-            status_icon.set_dot_color(Qt.yellow)
+            status_icon.set_dot_color(Qt.GlobalColor.yellow)
