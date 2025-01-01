@@ -34,7 +34,7 @@ from datetime import datetime
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import QCoreApplication, Qt, QTimer, QUrl
 from PyQt5.QtGui import (QColor, QCursor, QDesktopServices, QIcon,
-                         QKeySequence, QPixmap)
+                         QKeySequence, QPixmap, QFontMetrics)
 from PyQt5.QtWidgets import (QAction, QApplication, QButtonGroup, QCheckBox,
                              QComboBox, QFrame, QGridLayout, QGroupBox,
                              QHBoxLayout, QLabel, QMainWindow, QMessageBox,
@@ -56,7 +56,7 @@ from telemffb.sim.aircraft_base import effects
 from telemffb.telem.SimTelemListener import SimTelemListener
 from telemffb.SystemSettingsDialog import SystemSettingsDialog
 from telemffb.TeleplotSetupDialog import TeleplotSetupDialog
-from telemffb.utils import exit_application, overrides
+from telemffb.utils import exit_application, overrides, HiDpiPixmap
 
 class MainWindow(QMainWindow):
     
@@ -329,16 +329,19 @@ class MainWindow(QMainWindow):
         self.vpflogo_label = QLabel(self.logo_stack)
         self.devicetype_label = ClickLogo(self.logo_stack)
         self.devicetype_label.clicked.connect(self.device_logo_click_event)
-        pixmap = QPixmap(":/image/vpforcelogo.png")
-        pixmap2 = QPixmap(utils.get_device_logo(G.device_type))
-        
+        pixmap = HiDpiPixmap(":/image/vpforcelogo.png")
+        pixmap = pixmap._scaled(271, 115, aspectRatioMode=QtCore.Qt.KeepAspectRatio, transformMode=QtCore.Qt.SmoothTransformation)
+
+        pixmap2 = HiDpiPixmap(utils.get_device_logo(G.device_type))
+        pixmap2 = pixmap2._scaled(round(pixmap2.width()), round(pixmap2.height()))
+
         self.vpflogo_label.setPixmap(pixmap)
         self.devicetype_label.setPixmap(pixmap2)
         self.devicetype_label.setScaledContents(True)
 
         # Resize QGroupBox to match the size of the larger label
-        max_width = pixmap.width()
-        max_height = pixmap.height()
+        max_width = round(pixmap.width() / pixmap.devicePixelRatioF())
+        max_height = round(pixmap.height() / pixmap.devicePixelRatioF())
         self.logo_stack.setFixedSize(max_width, max_height)
         self.logo_stack.setStyleSheet("QGroupBox { border: none; }")
         # Align self.image_label2 with the upper left corner of self.image_label
@@ -519,17 +522,8 @@ class MainWindow(QMainWindow):
         # self.tab_widget.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
 
         # Set the main window area height to 0
-        self.tab_widget.setMinimumHeight(14)
-        style_sheet = """
-        QTabBar::tab:selected {
-            background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                                  stop: 0 #dca3f2, stop: 0.2 #c174e6,
-                                  stop: 0.5 #a13fb1, stop: 0.8 #822c94, stop: 1.0 #6b2378);
-;
-            color: white;
-        }
-        """
-        self.tab_widget.setStyleSheet(style_sheet)
+        # self.tab_widget.setMinimumHeight(14)
+
 
         # Create a horizontal line widget
         self.line_widget = QFrame(self)
@@ -614,6 +608,25 @@ class MainWindow(QMainWindow):
 
         self.tab_widget.addTab(QWidget(), "Hide")
         self.tab_widget.currentChanged.connect(self.switch_window_view)
+        tab_bar = self.tab_widget.tabBar()
+        fm = QFontMetrics(tab_bar.font())
+        ht = fm.height()
+        tb_height = ht + 8
+        style_sheet = f"""
+        QTabBar::tab {{
+            height: {tb_height}px;
+        }}
+        QTabBar::tab:selected {{
+            background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                                  stop: 0 #dca3f2, stop: 0.2 #c174e6,
+                                  stop: 0.5 #a13fb1, stop: 0.8 #822c94, stop: 1.0 #6b2378);
+            color: white;
+        }}
+    """
+        self.tab_widget.setStyleSheet(style_sheet)
+
+        tb_height = self.tab_widget.tabBar().sizeHint().height()
+        self.tab_widget.setMinimumHeight(tb_height)
 
 
         # test buttons
@@ -1089,9 +1102,9 @@ class MainWindow(QMainWindow):
         xmlutils.update_vars(types[arg], G.userconfig_path, G.defaults_path)
         G.current_device_config_scope = types[arg]
 
-        pixmap = QPixmap(utils.get_device_logo(G.current_device_config_scope))
+        pixmap = HiDpiPixmap(utils.get_device_logo(G.current_device_config_scope))
         self.devicetype_label.setPixmap(pixmap)
-        self.devicetype_label.setFixedSize(pixmap.width(), pixmap.height())
+        #self.devicetype_label.setFixedSize(pixmap.width(), pixmap.height())
 
         if G.master_instance:
             self.effect_lbl.setText(f'Active Effects for: {G.current_device_config_scope}')
