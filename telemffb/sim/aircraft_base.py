@@ -267,6 +267,8 @@ class AircraftBase(object):
     collective_ft_ovd_cp0_y = 4096
     collective_ft_use_master_buttons: bool = False
 
+    adv_spr_override_enabled: bool = False
+    adv_spr_gains: str = ''
 
     last_device_x = None
     last_device_y = None
@@ -1755,6 +1757,18 @@ class AircraftBase(object):
         spring.setCondition(self.spring_y)
         # ensure spring is started with override = true
         spring.start(override=True)
+
+    def modify_game_spring(self):
+        ## Currently hard-overrides game spring.. will break trimming, dynamic center, etc...
+        gains = utils.get_gain_from_curve(self.adv_spr_gains, self.telem_data.get('IAS', 0))
+        # print(f"Gains: {gains}")
+        # adjuster = effects['spr_adjuster'].spring_adjuster()
+        adjuster = effects['adv_spring'].spring()
+        self.spring_y.positiveCoefficient = self.spring_y.negativeCoefficient = round(4096 * gains.get('y', 0))
+        self.spring_x.positiveCoefficient = self.spring_x.negativeCoefficient = round(4096 * gains.get('x', 0))
+        adjuster.setCondition(self.spring_y)
+        adjuster.setCondition(self.spring_x)
+        adjuster.start(override=True)
 
     def on_event(self):
         pass

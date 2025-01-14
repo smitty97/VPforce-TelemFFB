@@ -1212,6 +1212,29 @@
 		<datatype>d_int</datatype>
 	</defaults>
 	<defaults>
+		<Grouping>Spring Override</Grouping>
+		<order>295</order>
+		<name>adv_spr_override_enabled</name>
+		<displayname>Advanced Spring Override</displayname>
+		<DCS>true</DCS>
+		<joystick>true</joystick>
+		<pedals>true</pedals>
+		<value>false</value>
+		<datatype>bool</datatype>
+	</defaults>
+	<defaults>
+		<Grouping>Spring Override</Grouping>
+		<order>295.1</order>
+		<name>adv_spr_gains</name>
+		<prereq>adv_spr_override_enabled</prereq>
+		<displayname>Advanced Spring Override</displayname>
+		<DCS>true</DCS>
+		<joystick>true</joystick>
+		<pedals>true</pedals>
+		<value>none</value>
+		<datatype>advspr</datatype>
+	</defaults>
+	<defaults>
 		<Grouping>Axis Control</Grouping>
 		<order>300</order>
 		<name>telemffb_controls_axes</name>
