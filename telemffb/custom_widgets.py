@@ -793,11 +793,13 @@ class LabeledToggle(QWidget):
 
         self.toggle = Toggle(self)
         self.label = QLabel(label, self)
+        self.label.setAlignment(Qt.AlignVCenter)  # Ensure the label is vertically centered
 
         layout = QHBoxLayout(self)
         layout.addWidget(self.toggle)
         layout.addWidget(self.label)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(1)
         self.setLayout(layout)
 
         self.toggle.stateChanged.connect(self.stateChanged)  # Forward the stateChanged signal
@@ -1019,6 +1021,12 @@ class SpringCurveWidget(QWidget):
         self.x_scale = 500  # Default range in base unit
         self.point_radius = 3
         self.margin = 50
+
+        self.margin_top = 20  # Reduced space at the top
+        self.margin_bottom = 30  # Reduced space at the bottom
+        self.margin_left = 50  # Retain enough space for Y-axis labels
+        self.margin_right = 20  # Minimal margin on the right
+
         self.setMinimumSize(400, 300)
         self.setWindowTitle("Spring Force Curve Editor")
 
@@ -1026,16 +1034,18 @@ class SpringCurveWidget(QWidget):
         self.current_unit = unit
         self.base_unit = "m/s"
 
-        # Smooth curve toggle
-        self.smooth_curve_enabled = False
-        self.smooth_toggle = QCheckBox("Smooth Curve", self)
-        self.smooth_toggle.stateChanged.connect(self.toggle_smooth_curve)
-        self.smooth_toggle.move(10, 10)
-
-        # Reset Button
-        self.reset_button = QPushButton('Reset Points', self)
-        self.reset_button.move(120, 10)
-        self.reset_button.clicked.connect(lambda: self.clear_points())
+        # # Smooth curve toggle
+        # self.smooth_curve_enabled = False
+        # self.smooth_toggle = LabeledToggle(self, "Smooth Curve")
+        # self.smooth_toggle.stateChanged.connect(self.toggle_smooth_curve)
+        # self.smooth_toggle.move(10, 10)
+        # self.smooth_toggle.hide()
+        #
+        # # Reset Button
+        # self.reset_button = QPushButton('Reset Points', self)
+        # self.reset_button.move(120, 10)
+        # self.reset_button.clicked.connect(lambda: self.clear_points())
+        # self.reset_button.hide()
 
         # message label
         self.msg_label = QLabel(self)
@@ -1091,10 +1101,11 @@ class SpringCurveWidget(QWidget):
         self.current_unit = new_unit
         self.update()
 
-    def toggle_smooth_curve(self):
+    def toggle_smooth_curve(self, state):
         """Toggles smooth curve drawing, ensuring bounds are checked and the checkbox state is consistent."""
-        if not self.smooth_toggle.isChecked():
-            self.smooth_curve_enabled = self.smooth_toggle.isChecked()
+        toggle = self.sender()
+        if not state:
+            self.smooth_curve_enabled = False
             # self.msg_label.hide()  # Hide any error messages
             self.update()
             return
@@ -1103,7 +1114,7 @@ class SpringCurveWidget(QWidget):
             self.msg_label.setText("Error: Need at least 4 points for smooth mode.")
             self.msg_label.show()
             QTimer.singleShot(3000, self.msg_label.hide)
-            QTimer.singleShot(300, lambda: self.smooth_toggle.setChecked(False)) # Force the toggle to unchecked
+            QTimer.singleShot(300, lambda: toggle.setChecked(False)) # Force the toggle to unchecked
 
             return
 
@@ -1120,19 +1131,19 @@ class SpringCurveWidget(QWidget):
                 self.msg_label.setText("Error: Smooth curve would exceed bounds.")
                 self.msg_label.show()
                 QTimer.singleShot(3000, self.msg_label.hide)
-                QTimer.singleShot(300, lambda: self.smooth_toggle.setChecked(False))  # Force the toggle to unchecked
+                QTimer.singleShot(300, lambda: toggle.setChecked(False))  # Force the toggle to unchecked
 
                 return
         except Exception as e:
             self.msg_label.setText(f"Error: Cannot enable smooth curve ({e}).")
             self.msg_label.show()
-            QTimer.singleShot(300, lambda: self.smooth_toggle.setChecked(False))  # Force the toggle to unchecked
+            QTimer.singleShot(300, lambda: toggle.setChecked(False))  # Force the toggle to unchecked
 
             # self.smooth_toggle.setChecked(False)  # Force the toggle to unchecked
             return
 
         # Enable smooth curve mode
-        self.smooth_curve_enabled = self.smooth_toggle.isChecked()
+        self.smooth_curve_enabled = True
         self.msg_label.hide()  # Hide any error messages
         self.update()
 
@@ -1221,6 +1232,39 @@ class SpringCurveWidget(QWidget):
             )
         )
 
+    def draw_crosshairs(self, speed_mps, gain):
+        if not self.isEnabled():
+            return
+        """
+        Draw crosshairs on the graph at the specified speed and gain.
+        Args:
+            speed_mps (float): The airspeed in m/s.
+            gain (float): The percentage gain.
+        """
+        # Convert speed to current units
+        current_conversion = self.UNIT_CONVERSIONS[self.current_unit]
+        speed_converted = speed_mps * current_conversion
+
+        # Calculate crosshair positions in widget space
+        rect = self.rect().adjusted(self.margin_left, self.margin_top, -self.margin_right, -self.margin_bottom)
+        crosshair_x = rect.left() + (speed_converted / self.x_scale) * rect.width()
+        crosshair_y = rect.top() + (1 - gain / 100.0) * rect.height()
+
+        # Set crosshair position and store gain and speed for label
+        self.crosshair_position = QPointF(crosshair_x, crosshair_y)
+        self.crosshair_gain = gain
+        self.crosshair_speed = speed_converted
+        self.update()  # Trigger repaint
+
+    def clear_crosshairs(self):
+        """
+        Clear the crosshairs from the graph.
+        """
+        self.crosshair_position = None
+        self.crosshair_gain = None
+        self.crosshair_speed = None
+        self.update()  # Trigger repaint
+
     def paintEvent(self, event):
         painter = QPainter(self)
         self.draw_grid(painter)
@@ -1229,23 +1273,40 @@ class SpringCurveWidget(QWidget):
             self.draw_smooth_curve(painter)
         else:
             self.draw_curve(painter)
-        self.draw_dashed_lines(painter)
 
         # Highlight the dragged point
         if self.dragging_point is not None:
             self.highlight_dragged_point(painter)
 
-        # Draw the dashed intersection line if a test point is set
-        if self.test_point is not None:
-            self.draw_test_intersection(painter)
+        # Draw the crosshairs if position is set
+        if hasattr(self, 'crosshair_position') and self.crosshair_position is not None:
+            painter.setPen(QPen(QColor("#ab37c8"), 2, Qt.DashLine))  # Red dashed lines for crosshairs
+            rect = self.rect().adjusted(self.margin_left, self.margin_top, -self.margin_right, -self.margin_bottom)
 
-            # Apply disabled overlay if the widget is disabled
+            # Draw vertical and horizontal crosshair lines
+            painter.drawLine(int(self.crosshair_position.x()), rect.top(),
+                             int(self.crosshair_position.x()), rect.bottom())  # Vertical line
+            painter.drawLine(rect.left(), int(self.crosshair_position.y()),
+                             rect.right(), int(self.crosshair_position.y()))  # Horizontal line
+
+        # Draw the live speed and gain label at the center top of the graph
+        if hasattr(self, 'crosshair_speed') and self.crosshair_speed is not None and hasattr(self, 'crosshair_gain'):
+            rect = self.rect().adjusted(self.margin_left, self.margin_top, -self.margin_right, -self.margin_bottom)
+            label_text = f"Speed: {self.crosshair_speed:.1f} {self.current_unit}, Gain: {self.crosshair_gain:.1f}%"
+            label_x = rect.left() + (rect.width() // 2) - (len(label_text) * 3)  # Center horizontally
+            label_y = rect.top() - 5  # Fixed position slightly above the graph area
+
+            painter.setPen(QPen(Qt.black))  # Black text color
+            painter.setFont(QFont('Arial', 10, QFont.Bold))  # Bold font for visibility
+            painter.drawText(label_x, label_y, label_text)
+
+        # Apply disabled overlay if the widget is disabled
         if not self._enabled:
             self.apply_disabled_overlay(painter)
 
     def draw_grid(self, painter):
         """Draws the grid lines."""
-        rect = self.rect().adjusted(self.margin, self.margin, -self.margin, -self.margin)  # Adjust to ensure margin
+        rect = self.rect().adjusted(self.margin_left, self.margin_top, -self.margin_right, -self.margin_bottom)  # Adjust to ensure margin
         painter.setPen(QPen(Qt.lightGray, 1, Qt.DotLine))
 
         # Draw horizontal grid lines (Y-axis 0% to 100%)
@@ -1260,7 +1321,7 @@ class SpringCurveWidget(QWidget):
 
     def draw_axis_labels(self, painter):
         """Draws the axis labels outside the grid area."""
-        rect = self.rect().adjusted(self.margin, self.margin, -self.margin, -self.margin)
+        rect = self.rect().adjusted(self.margin_left, self.margin_top, -self.margin_right, -self.margin_bottom)
         font = QFont()
         font.setBold(True)
         painter.setFont(font)
@@ -1269,13 +1330,13 @@ class SpringCurveWidget(QWidget):
         # Draw Y-axis labels (0% to 100%)
         for i in range(0, 11):
             y = int(rect.top() + i * rect.height() / 10)
-            painter.drawText(rect.left() - self.margin + 15, y + 5, f"{100 - i * 10}%")
+            painter.drawText(rect.left() - self.margin_left + 15, y + 5, f"{100 - i * 10}%")
 
         # Draw X-axis labels (converted to current unit)
         for i in range(0, 11):
             x = int(rect.left() + i * rect.width() / 10)
             speed = self.x_scale * i / 10
-            painter.drawText(x - 10, rect.bottom() + self.margin //2, f"{int(speed)}")
+            painter.drawText(x - 10, rect.bottom() + self.margin_bottom //2, f"{int(speed)}")
 
     def draw_curve(self, painter):
         """Draws the spring force curve and points (linear segments)."""
@@ -1338,20 +1399,16 @@ class SpringCurveWidget(QWidget):
                 2 * self.point_radius
             ))
 
-    def draw_dashed_lines(self, painter):
-        """No longer needed."""
-        pass
-
     def map_to_widget_space(self, point):
         """Maps the curve points to the widget's coordinate system."""
-        rect = self.rect().adjusted(self.margin, self.margin, -self.margin, -self.margin)  # Adjusted for margin
+        rect = self.rect().adjusted(self.margin_left, self.margin_top, -self.margin_right, -self.margin_bottom)  # Adjusted for margin
         x = rect.left() + (point.x() / self.x_scale) * rect.width()  # Use x_scale for X-axis
         y = rect.top() + (1 - point.y() / 100.0) * rect.height()  # Y-axis is fixed 0-100%
         return QPointF(x, y)
 
     def map_from_widget_space(self, point):
         """Maps widget space coordinates back to data space."""
-        rect = self.rect().adjusted(self.margin, self.margin, -self.margin, -self.margin)  # Adjusted for margin
+        rect = self.rect().adjusted(self.margin_left, self.margin_top, -self.margin_right, -self.margin_bottom)  # Adjusted for margin
         x = (point.x() - rect.left()) / rect.width() * self.x_scale  # Use x_scale for X-axis
         y = (1 - (point.y() - rect.top()) / rect.height()) * 100  # Y-axis is fixed 0-100%
         return QPointF(x, y)
@@ -1488,7 +1545,7 @@ class SpringCurveWidget(QWidget):
 
             # Update the coordinate label with the current position of the dragging point
                     # Update the coordinate label with the current position of the dragging point
-            rect = self.rect().adjusted(self.margin, self.margin, -self.margin, -self.margin)  # Graph area
+            rect = self.rect().adjusted(self.margin_left, self.margin_top, -self.margin_right, -self.margin_bottom)  # Graph area
             self.coordinate_label.setText(f"{self.dragging_point.x():.2f} {self.current_unit}, %{self.dragging_point.y():.2f}")
             self.coordinate_label.move(
                 rect.right() - self.coordinate_label.width() - 1,  # 10px padding from right edge
@@ -1585,13 +1642,12 @@ class SpringCurveWidget(QWidget):
         self.smooth_curve_enabled = data.get("smooth_curve_enabled", False)
         self.current_unit = data.get("current_unit", "kt")
         # self.unit_selector.setCurrentText(self.current_unit)
-        self.smooth_toggle.setChecked(self.smooth_curve_enabled)
+        # self.smooth_toggle.setChecked(self.smooth_curve_enabled)
         self.update()
 
     def clear_points(self):
         """Resets the points to the default values."""
         self.points = [QPointF(0, 0), QPointF(self.x_scale, 100)]  # Default 0% at 0 knots and 100% at 500 knots
-        self.smooth_toggle.setChecked(False)
         self.test_point = None  # Clear the test point when resetting
         self.update()
 
@@ -1605,7 +1661,7 @@ class SpringCurveWidget(QWidget):
 
             if not (np.isnan(test_widget_point.x()) or np.isnan(test_widget_point.y())):
                 # Draw the vertical line representing the speed (convert to int)
-                rect = self.rect().adjusted(self.margin, self.margin, -self.margin, -self.margin)
+                rect = self.rect().adjusted(self.margin_left, self.margin_top, -self.margin_right, -self.margin_bottom)
                 painter.drawLine(int(test_widget_point.x()), rect.top(), int(test_widget_point.x()), rect.bottom())
 
                 # Draw the horizontal line representing the gain (convert to int)

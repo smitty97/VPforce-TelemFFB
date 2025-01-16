@@ -911,6 +911,8 @@ def get_gain_from_curve(json_string, input_airspeed_ms):
     # Extract curves and units
     curve_x = settings.get("curve_x", {})
     curve_y = settings.get("curve_y", {})
+    gain_x = settings.get('gain_x')/100
+    gain_y = settings.get('gain_y')/100
     units = settings.get("units", "m/s")  # Default to m/s if units not specified
 
     # Conversion factor to m/s
@@ -946,8 +948,9 @@ def get_gain_from_curve(json_string, input_airspeed_ms):
         return float(interpolation(input_airspeed_ms))
 
     # Interpolate X and Y values
-    interpolated_x = round(float(interpolate_curve(curve_x)/100), 3)
-    interpolated_y = round(float(interpolate_curve(curve_y)/100), 3)
+    # print(f"x:{gain_x}, y:{gain_y}")
+    interpolated_x = round(float(interpolate_curve(curve_x)/100) * gain_x, 3)
+    interpolated_y = round(float(interpolate_curve(curve_y)/100) * gain_y, 3)
 
     return {"x": interpolated_x, "y": interpolated_y}
 

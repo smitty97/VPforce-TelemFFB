@@ -25,6 +25,7 @@ import inspect
 
 import telemffb.globals as G
 from telemffb.ui.Ui_AdvancedSpring import Ui_AdvancedSpringDialog
+from telemffb.utils import get_gain_from_curve
 from telemffb.custom_widgets import SpringCurveWidget
 
 class AdvancedSpringDialog(QDialog, Ui_AdvancedSpringDialog):
@@ -36,6 +37,7 @@ class AdvancedSpringDialog(QDialog, Ui_AdvancedSpringDialog):
     }
     accepted = pyqtSignal(str)
 
+
     def __init__(self, parent=None, settings=None, device="joystick"):
         super(AdvancedSpringDialog, self).__init__(parent)
 
@@ -43,10 +45,14 @@ class AdvancedSpringDialog(QDialog, Ui_AdvancedSpringDialog):
         self.current_unit = "kt"
         self.base_unit = "m/s"
         self.x_scale = 500
+        self.gain_x: int = 100
+        self.gain_y: int = 100
         self.device_type = device
         self.default_settings = ('{'
                                  '"curve_x": {"x_scale": 500, "points": [{"x": 0.0, "y": 0.0}, {"x": 500.0, "y": 100.0}], "smooth_curve_enabled": false, "current_unit": "kt"},'
                                  ' "curve_y": {"x_scale": 500, "points": [{"x": 0.0, "y": 0.0}, {"x": 500.0, "y": 100.0}], "smooth_curve_enabled": false, "current_unit": "kt"},'
+                                 ' "gain_x": 100,'
+                                 ' "gain_y": 100,'
                                  ' "units": "kt",'
                                  ' "scale": 500}'
                                  )
@@ -108,6 +114,9 @@ class AdvancedSpringDialog(QDialog, Ui_AdvancedSpringDialog):
         self.pb_revert.setToolTip('Revert to settings state when dialog opened')
         self.pb_revert.clicked.connect(self.revert_curve_settings)
 
+        self.tog_live_view.setToolTip('Show current live spring gain and airspeed on graph')
+        self.tog_live_view.stateChanged.connect(self.toggle_live_view)
+
         if settings != "none":
             self.init_settings = settings
             self.load_curve_settings(self.init_settings)
@@ -119,15 +128,57 @@ class AdvancedSpringDialog(QDialog, Ui_AdvancedSpringDialog):
             self.curve_y.setEnabled(False)
             self.pb_copy_up.setEnabled(False)
             self.pb_copy_down.setEnabled(False)
+            self.sl_y_mastergain.setEnabled(False)
+            self.cb_y_smoothcurve.setEnabled(False)
+            self.pb_y_reset.setEnabled(False)
+            self.lab_y.setText(f'<html><head/><body><p><span style="color:grey;">Y</span></p></body></html>')
+
+        self.sl_x_mastergain.valueChanged.connect(lambda: self.update_slider_labels)
+        self.sl_y_mastergain.valueChanged.connect(lambda: self.update_slider_labels)
+        self.sl_x_mastergain.setValue(self.gain_x)
+        self.sl_y_mastergain.setValue(self.gain_y)
+
+        self.cb_x_smoothcurve.stateChanged.connect(self.curve_x.toggle_smooth_curve)
+        self.cb_y_smoothcurve.stateChanged.connect(self.curve_y.toggle_smooth_curve)
+
+        self.pb_x_reset.clicked.connect(lambda: self.reset_curve('x'))
+        self.pb_y_reset.clicked.connect(lambda: self.reset_curve('y'))
 
 
+    def reset_curve(self, axis):
+        if axis == "x":
+            self.curve_x.clear_points()
+            self.cb_x_smoothcurve.setChecked(False)
+        elif axis == "y":
+            self.curve_y.clear_points()
+            self.cb_y_smoothcurve.setChecked(False)
 
-    # def closeEvent(self, event):
-    #     """
-    #     Overrides the closeEvent to ensure the same logic is applied when the dialog is closed.
-    #     """
-    #     self.cancel_curve_settings()
-    #     event.ignore()  # Prevent the default close behavior since reject handles it
+    def toggle_live_view(self):
+        if self.tog_live_view.isChecked():
+            G.telem_manager.telemetryReceived.connect(self.draw_live_view)
+        else:
+            G.telem_manager.telemetryReceived.disconnect(self.draw_live_view)
+            self.curve_x.clear_crosshairs()
+            self.curve_x.msg_label.hide()
+            self.curve_y.clear_crosshairs()
+            self.curve_y.msg_label.hide()
+
+    def draw_live_view(self, data):
+        ias = data.get('IAS', 0)
+        current_gains = G.telem_manager.currentAircraft.adv_spr_gains
+        if current_gains != "none":
+            gains = get_gain_from_curve(current_gains, ias)
+        else:
+            gains = None
+        # print(f"gains: {current_gains}")
+        for axis, gain in zip([self.curve_x, self.curve_y], ['x', 'y']):
+            if gains is None:
+                axis.msg_label.setText('Please save a configuration before enabling live view')
+                axis.msg_label.show()
+                # G.telem_manager.currentAircraft.flag_error('Please save a configuration before enabling live view')
+                continue
+            else:
+                axis.draw_crosshairs(ias, gains.get(gain, 0)*100)
 
     def cancel_curve_settings(self):
         self.revert_curve_settings()
@@ -141,15 +192,15 @@ class AdvancedSpringDialog(QDialog, Ui_AdvancedSpringDialog):
             """
         settings = {
             "curve_x": self.curve_x.to_dict(),
+            "gain_x": self.sl_x_mastergain.value(),
             "curve_y": self.curve_y.to_dict(),
+            "gain_y": self.sl_y_mastergain.value(),
             "units": self.current_unit,
             "scale": self.x_scale
         }
         json_string = json.dumps(settings)
-        print(f"SETTINGS:\n{json_string}")
         self.accepted.emit(json_string)
         if close:
-            print("SAVE SAVE SAVE CLOSE CLOSE CLOSE")
             self.accept()
 
     def load_curve_settings(self, json_string):
@@ -160,7 +211,13 @@ class AdvancedSpringDialog(QDialog, Ui_AdvancedSpringDialog):
             settings = json.loads(json_string)
             if "curve_x" in settings and "curve_y" in settings:
                 self.curve_x.from_dict(settings["curve_x"])
+                self.cb_x_smoothcurve.setChecked(settings['curve_x']['smooth_curve_enabled'])
+
+                self.gain_x = settings.get('gain_x', 100)
                 self.curve_y.from_dict(settings["curve_y"])
+                self.cb_y_smoothcurve.setChecked(settings['curve_y']['smooth_curve_enabled'])
+
+                self.gain_y = settings.get('gain_y', 100)
                 self.x_scale = settings.get('scale', 500)
                 self.current_unit = settings.get('units', "kt")
                 self.cb_airspeed_unit.setCurrentText(self.current_unit)
@@ -205,11 +262,9 @@ class AdvancedSpringDialog(QDialog, Ui_AdvancedSpringDialog):
                 QMessageBox.warning(self, "Invalid Input", str(e))
 
     def copy_x_to_y(self):
-        print("X TO Y")
         self.curve_y.from_dict(self.curve_x.to_dict())
 
     def copy_y_to_x(self):
-        print("Y TO X")
         self.curve_x.from_dict(self.curve_y.to_dict())
         pass
 
@@ -237,6 +292,17 @@ class AdvancedSpringDialog(QDialog, Ui_AdvancedSpringDialog):
             axis.current_unit = new_unit
         self.x_scale *= conversion_factor
         self.current_unit = new_unit
+
+    def update_slider_labels(self):
+        """
+        Updates the slider labels
+        """
+        self.gain_x = self.sl_x_mastergain.value()
+        self.gain_y = self.sl_y_mastergain.value()
+        self.lab_x_mastergain.setText(f"Axis Master Gain: %{self.gain_x}")
+        self.lab_y_mastergain.setText(f"Axis Master Gain: %{self.gain_y}")
+        self.lab_x.adjustSize()
+        self.lab_y.adjustSize()
 
 
 
