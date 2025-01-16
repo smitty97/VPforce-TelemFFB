@@ -48,6 +48,8 @@ class AdvancedSpringDialog(QDialog, Ui_AdvancedSpringDialog):
         self.gain_x: int = 100
         self.gain_y: int = 100
         self.device_type = device
+        self.current_settings = None
+        self.init_settings = None
         self.default_settings = ('{'
                                  '"curve_x": {"x_scale": 500, "points": [{"x": 0.0, "y": 0.0}, {"x": 500.0, "y": 100.0}], "smooth_curve_enabled": false, "current_unit": "kt"},'
                                  ' "curve_y": {"x_scale": 500, "points": [{"x": 0.0, "y": 0.0}, {"x": 500.0, "y": 100.0}], "smooth_curve_enabled": false, "current_unit": "kt"},'
@@ -133,8 +135,8 @@ class AdvancedSpringDialog(QDialog, Ui_AdvancedSpringDialog):
             self.pb_y_reset.setEnabled(False)
             self.lab_y.setText(f'<html><head/><body><p><span style="color:grey;">Y</span></p></body></html>')
 
-        self.sl_x_mastergain.valueChanged.connect(lambda: self.update_slider_labels)
-        self.sl_y_mastergain.valueChanged.connect(lambda: self.update_slider_labels)
+        self.sl_x_mastergain.valueChanged.connect(lambda: self.update_slider_labels())
+        self.sl_y_mastergain.valueChanged.connect(lambda: self.update_slider_labels())
         self.sl_x_mastergain.setValue(self.gain_x)
         self.sl_y_mastergain.setValue(self.gain_y)
 
@@ -144,6 +146,22 @@ class AdvancedSpringDialog(QDialog, Ui_AdvancedSpringDialog):
         self.pb_x_reset.clicked.connect(lambda: self.reset_curve('x'))
         self.pb_y_reset.clicked.connect(lambda: self.reset_curve('y'))
 
+    def showEvent(self, event):
+        if self.current_settings is not None:
+            self.init_settings = self.current_settings
+
+        # self.raise_()
+        # self.activateWindow()
+        # self.setWindowState(self.windowState() & ~Qt.WindowMinimized | Qt.WindowActive)
+        # self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
+        super().showEvent(event)
+
+    def closeEvent(self, event):
+        ## When dialog is opened on child instance via event triggered by IPC message from master instance
+        ## The close event on the dialog will cause the entire instance to exit
+        ## This remaps the close event to execute the cancel command which reverts the setting and hides the window
+        self.cancel_curve_settings()
+        event.ignore()
 
     def reset_curve(self, axis):
         if axis == "x":
@@ -178,6 +196,7 @@ class AdvancedSpringDialog(QDialog, Ui_AdvancedSpringDialog):
                 # G.telem_manager.currentAircraft.flag_error('Please save a configuration before enabling live view')
                 continue
             else:
+                # print(f"DRAWING: {gains}")
                 axis.draw_crosshairs(ias, gains.get(gain, 0)*100)
 
     def cancel_curve_settings(self):
@@ -186,6 +205,7 @@ class AdvancedSpringDialog(QDialog, Ui_AdvancedSpringDialog):
 
     def revert_curve_settings(self):
         self.load_curve_settings(self.init_settings)
+
     def save_curve_settings(self, close=True):
         """
             Save the settings of both curve widgets into a JSON-formatted string.
@@ -199,9 +219,11 @@ class AdvancedSpringDialog(QDialog, Ui_AdvancedSpringDialog):
             "scale": self.x_scale
         }
         json_string = json.dumps(settings)
+        self.current_settings = json_string
         self.accepted.emit(json_string)
         if close:
-            self.accept()
+            self.tog_live_view.setChecked(False)
+            self.hide()
 
     def load_curve_settings(self, json_string):
         """

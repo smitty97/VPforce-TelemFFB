@@ -1241,6 +1241,9 @@ class SpringCurveWidget(QWidget):
             speed_mps (float): The airspeed in m/s.
             gain (float): The percentage gain.
         """
+        if self.msg_label.isVisible() and self.msg_label.text() == 'Please save a configuration before enabling live view':
+            self.msg_label.hide()
+
         # Convert speed to current units
         current_conversion = self.UNIT_CONVERSIONS[self.current_unit]
         speed_converted = speed_mps * current_conversion
@@ -1647,25 +1650,25 @@ class SpringCurveWidget(QWidget):
 
     def clear_points(self):
         """Resets the points to the default values."""
-        self.points = [QPointF(0, 0), QPointF(self.x_scale, 100)]  # Default 0% at 0 knots and 100% at 500 knots
-        self.test_point = None  # Clear the test point when resetting
+        self.points = [QPointF(0, 0), QPointF(self.x_scale, 100)]  # Default 0% at 0 knots and 100%
+        # self.test_point = None  # Clear the test point when resetting
         self.update()
 
-    def draw_test_intersection(self, painter):
-        """Draws a dashed intersection line at the test point for demonstration."""
-        if self.test_point:
-            painter.setPen(QPen(Qt.red, 2, Qt.DashLine))
-
-            # Convert the test point to widget space
-            test_widget_point = self.map_to_widget_space(self.test_point)
-
-            if not (np.isnan(test_widget_point.x()) or np.isnan(test_widget_point.y())):
-                # Draw the vertical line representing the speed (convert to int)
-                rect = self.rect().adjusted(self.margin_left, self.margin_top, -self.margin_right, -self.margin_bottom)
-                painter.drawLine(int(test_widget_point.x()), rect.top(), int(test_widget_point.x()), rect.bottom())
-
-                # Draw the horizontal line representing the gain (convert to int)
-                painter.drawLine(rect.left(), int(test_widget_point.y()), rect.right(), int(test_widget_point.y()))
-            else:
-                # Handle invalid test point (e.g., NaN)
-                print("Warning: Test point contains NaN, skipping drawing.")
+    # def draw_test_intersection(self, painter):
+    #     """Draws a dashed intersection line at the test point for demonstration."""
+    #     if self.test_point:
+    #         painter.setPen(QPen(Qt.red, 2, Qt.DashLine))
+    #
+    #         # Convert the test point to widget space
+    #         test_widget_point = self.map_to_widget_space(self.test_point)
+    #
+    #         if not (np.isnan(test_widget_point.x()) or np.isnan(test_widget_point.y())):
+    #             # Draw the vertical line representing the speed (convert to int)
+    #             rect = self.rect().adjusted(self.margin_left, self.margin_top, -self.margin_right, -self.margin_bottom)
+    #             painter.drawLine(int(test_widget_point.x()), rect.top(), int(test_widget_point.x()), rect.bottom())
+    #
+    #             # Draw the horizontal line representing the gain (convert to int)
+    #             painter.drawLine(rect.left(), int(test_widget_point.y()), rect.right(), int(test_widget_point.y()))
+    #         else:
+    #             # Handle invalid test point (e.g., NaN)
+    #             print("Warning: Test point contains NaN, skipping drawing.")
