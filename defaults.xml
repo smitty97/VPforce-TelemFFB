@@ -1217,6 +1217,7 @@
 		<name>adv_spr_override_enabled</name>
 		<displayname>Advanced Spring Override</displayname>
 		<DCS>true</DCS>
+		<MSFS>true</MSFS>
 		<joystick>true</joystick>
 		<pedals>true</pedals>
 		<value>false</value>
@@ -1229,6 +1230,7 @@
 		<prereq>adv_spr_override_enabled</prereq>
 		<displayname>Advanced Spring Override</displayname>
 		<DCS>true</DCS>
+		<MSFS>true</MSFS>
 		<joystick>true</joystick>
 		<pedals>true</pedals>
 		<value>none</value>
