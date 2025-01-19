@@ -1482,31 +1482,17 @@ class SpringCurveWidget(QWidget):
             valid_move = True
 
             if index == 0:
-                # First point: allow movement along X=0 or Y=0
-                if new_pos.x() <= 0:
-                    new_pos.setX(0)  # Lock X to 0
-                    new_pos.setY(max(0, min(100, new_pos.y())))  # Allow vertical movement (Y-axis)
-                elif new_pos.y() <= 0:
-                    new_pos.setY(0)  # Lock Y to 0
-                    new_pos.setX(max(0, min(self.points[1].x() - 1, new_pos.x())))  # Allow horizontal movement (X-axis)
-                else:
-                    valid_move = False  # Prevent invalid diagonal movement
+                # First point: allow movement along X=0
+                new_pos.setX(0)  # Lock X to 0
+                new_pos.setY(max(0, min(100, new_pos.y())))  # Allow vertical movement (Y-axis)
 
                 # Validate bounds only in smooth mode
                 if self.smooth_curve_enabled:
                     valid_move = valid_move and self.check_smooth_curve_bounds(new_pos, index)
             elif index == len(self.points) - 1:
                 # Last point: allow movement along X=max or Y=100
-                if new_pos.x() >= self.x_scale:
-                    new_pos.setX(self.x_scale)  # Lock X to max
-                    new_pos.setY(max(0, min(100, new_pos.y())))  # Allow vertical movement (Y-axis)
-                elif new_pos.y() >= 100:
-                    new_pos.setY(100)  # Lock Y to 100
-                    new_pos.setX(
-                        max(self.points[-2].x() + 1,
-                            min(self.x_scale, new_pos.x())))  # Allow horizontal movement (X-axis)
-                else:
-                    valid_move = False  # Prevent invalid diagonal movement
+                new_pos.setX(self.x_scale)  # Lock X to max
+                new_pos.setY(max(0, min(100, new_pos.y())))  # Allow vertical movement (Y-axis)
 
                 # Validate bounds only in smooth mode
                 if self.smooth_curve_enabled:
