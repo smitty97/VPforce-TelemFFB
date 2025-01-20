@@ -234,15 +234,20 @@ class AdvancedSpringDialog(QDialog, Ui_AdvancedSpringDialog):
             if "curve_x" in settings and "curve_y" in settings:
                 self.curve_x.from_dict(settings["curve_x"])
                 self.cb_x_smoothcurve.setChecked(settings['curve_x']['smooth_curve_enabled'])
-
                 self.gain_x = settings.get('gain_x', 100)
+                self.sl_x_mastergain.setValue(settings['gain_x'])
+
                 self.curve_y.from_dict(settings["curve_y"])
                 self.cb_y_smoothcurve.setChecked(settings['curve_y']['smooth_curve_enabled'])
-
                 self.gain_y = settings.get('gain_y', 100)
+                self.sl_y_mastergain.setValue(settings['gain_y'])
+
+
+
                 self.x_scale = settings.get('scale', 500)
                 self.current_unit = settings.get('units', "kt")
                 self.cb_airspeed_unit.setCurrentText(self.current_unit)
+                self.update_slider_labels()
 
             else:
                 raise ValueError("Invalid JSON format: Missing 'curve_x' or 'curve_y' keys.")
