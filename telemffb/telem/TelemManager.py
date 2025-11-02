@@ -514,7 +514,7 @@ class TelemManager(QObject, threading.Thread):
                 self.currentAircraft._ipc_telem.clear()
 
         # Handle plotting
-        if G.args.plot:
+        if G.args.plot and utils.teleplot.enabled:
             for item in G.args.plot:
                 if item in telem_data:
                     if G.child_instance or G.launched_instances:
