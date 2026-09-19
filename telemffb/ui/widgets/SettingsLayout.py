@@ -961,6 +961,8 @@ class SettingsLayout(QGridLayout):
         ]
         if spec.constant_force:
             paragraphs.append("<b>Constant force:</b> keep a firm hold on the controls.")
+        if spec.note:
+            paragraphs.append(f"<b>Note:</b> {html.escape(spec.note, quote=False)}")
         paragraphs.append("Click again to stop.")
         tip = preview_tooltip_html(paragraphs)
         make(PREVIEW_GLYPHS['pv'], 'pv', tip,
@@ -1034,7 +1036,9 @@ class SettingsLayout(QGridLayout):
 
         label.setObjectName(f'namelabel_{item["name"]}')
         label.setToolTip(item['info'])
-        label.setMinimumHeight(20)
+        # never below the text's own height: once the form overflows its scroll
+        # area every row sits at its minimum, which clipped two-line names
+        label.setMinimumHeight(max(20, label.minimumSizeHint().height()))
         label.setMinimumWidth(20)
 
         #determine indentation
