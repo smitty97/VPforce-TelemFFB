@@ -43,6 +43,7 @@ for p in paths:
     except:
         pass
 
+import telemffb.globals as G
 import telemffb.hw.effect_levels as effect_levels
 import telemffb.hw.ffb_backend as ffb_backend
 import telemffb.hw.hid as hid
@@ -1039,6 +1040,8 @@ class FFBRhino(ffb_backend.BaseFFBDevice):
     
     @staticmethod
     def enumerate(pid=0) -> List[DeviceInfo]:
+        if G.debug_ignore_rhino_devices:
+            return []
         devs = hid.enumerate(vid=0xffff, pid=pid)
         devs = [DeviceInfo(**dev) for dev in devs]
         # returns a list of valid VPforce devices
