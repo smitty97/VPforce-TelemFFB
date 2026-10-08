@@ -332,6 +332,63 @@ class TestDInputHint:
         assert not world.dialog.device_cards.dinput_hint.isVisibleTo(
             world.dialog)
 
+    def _first_launch(self, tmp_path, monkeypatch, availability=(True, '')):
+        from telemffb.ui.dialogs.SystemSettingsDialog import SystemSettingsDialog
+        world = self._fresh(tmp_path, monkeypatch)
+        # after World, which installs its own always-available bridge
+        monkeypatch.setattr('telemffb.hw.ffb_dinput.bridge_availability',
+                            lambda *a, **k: availability)
+        world.dialog = SystemSettingsDialog(first_launch=True)
+        return world
+
+    def test_first_launch_turns_directinput_on_when_directlink_is_installed(
+            self, app, tmp_path, monkeypatch):
+        world = self._first_launch(tmp_path, monkeypatch)
+        dlg = world.dialog
+        assert dlg.cb_enable_dinput.isChecked()
+        model = dlg.cb_select_j.model()
+        names = [model.index(r, 0).data() for r in range(model.rowCount())]
+        moza_row = next(r for r, n in enumerate(names) if 'MOZA' in str(n))
+        hint = dlg.device_cards.dinput_hint
+        assert hint.isVisibleTo(dlg)
+        assert 'DirectLink is installed' in hint.text()
+        # pending until Save, like any other change in the dialog
+        assert not world.settings.get('enableDirectInput')
+        dlg.cb_select_j.setCurrentIndex(moza_row)
+        assert world.save()
+        assert world.settings.get('enableDirectInput') in (True, 'true')
+
+    def test_first_launch_without_directlink_leaves_it_off(
+            self, app, tmp_path, monkeypatch):
+        world = self._first_launch(
+            tmp_path, monkeypatch,
+            availability=(False, 'DirectLink is not installed.'))
+        dlg = world.dialog
+        assert not dlg.cb_enable_dinput.isChecked()
+        hint = dlg.device_cards.dinput_hint
+        assert hint.isVisibleTo(dlg)
+        assert 'turn on DirectLink integration' in hint.text()
+
+    def test_first_launch_with_vpforce_hardware_leaves_directinput_alone(
+            self, app, tmp_path, monkeypatch):
+        from telemffb.ui.dialogs.SystemSettingsDialog import SystemSettingsDialog
+        world = World(tmp_path, monkeypatch, random.Random(0), settings=SETTLED)
+        world.dialog = SystemSettingsDialog(first_launch=True)
+        assert not world.dialog.cb_enable_dinput.isChecked()
+
+    def test_without_first_launch_directinput_stays_off(
+            self, app, tmp_path, monkeypatch):
+        world = self._fresh(tmp_path, monkeypatch)
+        assert not world.dialog.cb_enable_dinput.isChecked()
+
+    def test_the_requested_tab_beats_the_last_saved_one(
+            self, app, tmp_path, monkeypatch):
+        from telemffb.ui.dialogs.SystemSettingsDialog import SystemSettingsDialog
+        world = World(tmp_path, monkeypatch, random.Random(0),
+                      settings=dict(SETTLED, sysDialogTab='tab_System'))
+        dlg = SystemSettingsDialog(tab='tab_Devices')
+        assert dlg.tabWidget.currentWidget().objectName() == 'tab_Devices'
+
     def test_a_configured_but_unplugged_rig_is_not_nagged(
             self, app, tmp_path, monkeypatch):
         """An owner whose Rhino is simply not plugged in right now has a

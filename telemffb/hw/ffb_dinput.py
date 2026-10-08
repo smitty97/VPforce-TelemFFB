@@ -570,6 +570,8 @@ class DIBridge:
     def _load_library(cls, dll_path: Optional[str] = None):
         """The loaded DLL, ABI checked - shared with bridge_status, which
         wants the same facts without constructing a working binding."""
+        if G.debug_hide_directlink:
+            raise DIBridgeNotInstalled("DirectLink is not installed (hidden by debug_hide_directlink)")
         paths = (dll_path,) if dll_path else cls.library_paths()
         dll = None
         for p in paths:

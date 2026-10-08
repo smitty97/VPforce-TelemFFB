@@ -62,6 +62,18 @@ dev_build : bool = False
 dev_userconfig: bool = True
 """will use/create userconfig.xml in root when True (dev_build must also be true)"""
 
+# Debug switches - never ship with any of these True
+debug_force_first_launch: bool = False
+"""when True, system settings and the user config come from a fresh sandbox
+(%TEMP%\\TelemFFB-first-launch) instead of the registry and LOCALAPPDATA, so
+every launch is a first launch; the real settings are never read or written"""
+
+debug_ignore_rhino_devices: bool = False
+"""when True, no VPforce Rhino device is enumerated, as if none were plugged in"""
+
+debug_hide_directlink: bool = False
+"""when True, the DirectLink DLL is never loaded, as if it were not installed"""
+
 dev_build_str: str = "DEV_BUILD"
 allow_multi_instance: bool = False
 """if true, will skip mutex lock checks and allow multiple instances to run simultaneously"""

@@ -641,20 +641,12 @@ class DeviceCardsPanel(QWidget):
         # reports a one-line minimum height, which let the dialog open
         # too short and crush the tallest card (the joystick selector
         # painted clipped until the frame was dragged).
-        lines = ['No VPforce devices were found.  To enable support for DirectInput devices,',
-                 'turn on DirectLink integration in System Settings.']
-        if DINPUT_BRIDGE_URL:
-            lines.append(f'DirectLink is a free download from '
-                         f'<a href="{DINPUT_BRIDGE_URL}">{DINPUT_BRIDGE_URL}</a>.')
-            hint = '<br/>'.join(lines)     # rich text: the link needs it
-        else:
-            hint = '\n'.join(lines)
-        self.dinput_hint = QLabel(hint)
+        self.dinput_hint = QLabel()
         self.dinput_hint.setObjectName('dinputHint')
         self.dinput_hint.setOpenExternalLinks(True)
         # dim through the theme's own placeholder color, like the ids labels
         self.dinput_hint.setForegroundRole(QPalette.ColorRole.PlaceholderText)
-        self.dinput_hint.setVisible(False)
+        self.set_dinput_hint(None)
         layout.addWidget(self.dinput_hint)
 
         # ------------------------------------------------------------------
@@ -692,6 +684,30 @@ class DeviceCardsPanel(QWidget):
         self.cb_al_enable.toggled.connect(self.al_enable_toggle.setChecked)
         self.al_enable_toggle.stateChanged.connect(
             lambda state: self.cb_al_enable.setChecked(bool(state)))
+
+    def set_dinput_hint(self, mode):
+        """Show the no-VPforce-devices hint in one of its two forms, or hide it.
+
+        :param mode: ``'enable'`` - DirectInput is off, say where the switch
+            is and where DirectLink comes from; ``'auto_enabled'`` - first
+            launch turned DirectInput on because DirectLink is installed;
+            ``None`` hides the hint.
+        """
+        if mode == 'auto_enabled':
+            lines = ['No VPforce devices were found.  DirectLink is installed, so DirectInput',
+                     'support has been turned on - choose your device above, then Save.']
+        elif mode == 'enable':
+            lines = ['No VPforce devices were found.  To enable support for DirectInput devices,',
+                     'turn on DirectLink integration in System Settings.']
+            if DINPUT_BRIDGE_URL:
+                lines.append(f'DirectLink is a free download from '
+                             f'<a href="{DINPUT_BRIDGE_URL}">{DINPUT_BRIDGE_URL}</a>.')
+        else:
+            self.dinput_hint.setVisible(False)
+            return
+        # rich text either way: the download link needs it
+        self.dinput_hint.setText('<br/>'.join(lines))
+        self.dinput_hint.setVisible(True)
 
     def _wire_launch_sync(self, card, al_box, min_box, headless_box):
         """Two-way sync between a card's visible launch controls and its

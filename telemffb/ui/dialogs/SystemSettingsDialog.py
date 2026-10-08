@@ -223,8 +223,17 @@ def _describe_setting_scope(elem):
 
 
 class SystemSettingsDialog(QDialog, Ui_SystemDialog):
-    def __init__(self, parent=None,):
+    def __init__(self, parent=None, tab=None, first_launch=False):
+        """
+        :param tab: objectName of the tab to open on (e.g. ``'tab_Devices'``),
+            overriding the one last saved from.
+        :param first_launch: the app found no stored device configuration;
+            with no VPforce device connected, DirectInput support is turned
+            on if DirectLink is installed.
+        """
         super(SystemSettingsDialog, self).__init__(parent)
+        #: first launch turned DirectInput on - the hint says so
+        self._directlink_auto_enabled = False
         # pending device path changes (only written on Save).  Created
         # before ANY wiring: state-derivation slots that read it fire as
         # early as load_settings' master-radio click.
@@ -407,7 +416,7 @@ class SystemSettingsDialog(QDialog, Ui_SystemDialog):
 
         # open on the tab the user last saved from (stored by name, so
         # tab reshuffles never send anyone to the wrong page)
-        last = str(G.system_settings.get('sysDialogTab', '') or '')
+        last = tab or str(G.system_settings.get('sysDialogTab', '') or '')
         self.tabWidget.setCurrentIndex(0)
         for i in range(self.tabWidget.count()):
             if self.tabWidget.widget(i).objectName() == last:
@@ -574,6 +583,31 @@ class SystemSettingsDialog(QDialog, Ui_SystemDialog):
         # restoring saved settings, so an earlier connection would fire the
         # handler before they exist.
         self.cb_enable_dinput.stateChanged.connect(self.toggle_dinput_support)
+
+        if first_launch:
+            self._enable_directlink_for_first_launch()
+
+    def _enable_directlink_for_first_launch(self):
+        """Turn DirectInput support on for a first launch with no VPforce
+        device but DirectLink installed, so the user's DirectInput stick is
+        already listed on the Devices tab.
+
+        Only ticks the box - the toggle's own handler re-lists the devices,
+        and the setting reaches the store on Save like any other change, so
+        Cancel leaves it off.  Master only: the setting is global.
+        """
+        if not G.master_instance or self.cb_enable_dinput.isChecked():
+            return
+        if FFBRhino.enumerate():
+            return
+        from telemffb.hw.ffb_dinput import bridge_availability
+        available, _reason = bridge_availability()
+        if not available:
+            return      # the 'enable' hint, with its download link, shows
+        logging.info("First launch: no VPforce devices, DirectLink installed - "
+                     "turning DirectInput support on")
+        self._directlink_auto_enabled = True
+        self.cb_enable_dinput.setChecked(True)
 
     @staticmethod
     def _enumerate_dinput_devices(enabled=None):
@@ -783,14 +817,20 @@ class SystemSettingsDialog(QDialog, Ui_SystemDialog):
         # only appear through the DirectInput listing, and that switch
         # lives on the System page.  Shown only while the cards would
         # otherwise be a dead end - no VPforce hardware listed, nothing
-        # configured, DirectInput off.
+        # configured, DirectInput off.  When first launch turned
+        # DirectInput on itself, the hint says that instead.
         dinput_on = (dinput_enabled if dinput_enabled is not None
                      else bool(G.system_settings.get('enableDirectInput',
                                                      False)))
         nothing_stored = not any(self._stored_or_pending(f'devpath_{r}')
                                  for r in self.INSTANCE_ROLES)
-        self.device_cards.dinput_hint.setVisible(
-            not devices and nothing_stored and not dinput_on)
+        hint = None
+        if not devices and nothing_stored:
+            if not dinput_on:
+                hint = 'enable'
+            elif self._directlink_auto_enabled:
+                hint = 'auto_enabled'
+        self.device_cards.set_dinput_hint(hint)
 
         # connect signals (once - this method also runs on repopulate)
         if not getattr(self, '_device_signals_connected', False):

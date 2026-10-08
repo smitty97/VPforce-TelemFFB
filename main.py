@@ -391,6 +391,16 @@ def _setup_config_paths():
     """
     G.defaults_path = utils.get_resource_path('defaults.xml', prefer_root=True)
 
+    if G.debug_force_first_launch:
+        # the sandbox stands in for every real userconfig location
+        if G.dev_build:
+            G.vpf_logo = ":/image/DEVlogo.png"
+        elif G.beta_build:
+            G.vpf_logo = ":/image/BETAlogo.png"
+        G.userconfig_rootpath = _first_launch_sandbox_dir()
+        G.userconfig_path = os.path.join(G.userconfig_rootpath, 'userconfig_v2.xml')
+        return
+
     if G.dev_build:
         G.vpf_logo = ":/image/DEVlogo.png"
         if G.dev_userconfig:
@@ -451,6 +461,41 @@ def _setup_dev_userconfig_paths():
 
     if not os.path.isfile(os.path.join(G.userconfig_rootpath, 'userconfig_.xml')) and os.path.exists(real_legacy_userconfig):
         shutil.copy(real_legacy_userconfig, os.path.join(G.userconfig_rootpath, 'userconfig.xml'))
+
+
+def _first_launch_sandbox_dir() -> str:
+    """Where G.debug_force_first_launch keeps its settings ini and userconfig.
+
+    A fixed path, so auto-launched children share the master's sandbox.
+    """
+    return os.path.join(os.environ.get('TEMP') or os.path.expanduser('~'),
+                        'TelemFFB-first-launch')
+
+
+def _open_system_settings() -> utils.SystemSettings:
+    """The system settings store: the registry, or under
+    G.debug_force_first_launch a sandbox ini the user-launched instance starts fresh each
+    launch - so every launch is a first launch and nothing the user changes
+    reaches their real settings."""
+    if not G.debug_force_first_launch:
+        return utils.SystemSettings()
+    sandbox = _first_launch_sandbox_dir()
+    if not G.args.child:
+        # the user-launched instance starts it fresh; the children it
+        # auto-launches must find what it set up
+        shutil.rmtree(sandbox, ignore_errors=True)
+    os.makedirs(sandbox, exist_ok=True)
+    logging.warning(f"DEBUG: debug_force_first_launch is on - settings and userconfig "
+                    f"are sandboxed in {sandbox}")
+    return utils.SystemSettings(path=os.path.join(sandbox, 'settings.ini'))
+
+
+def _log_debug_switches():
+    """One startup line naming any debug_* switch left on in globals."""
+    on = [name for name in ('debug_force_first_launch', 'debug_ignore_rhino_devices',
+                            'debug_hide_directlink') if getattr(G, name)]
+    if on:
+        logging.warning(f"DEBUG switches active: {', '.join(on)}")
 
 
 def _setup_standard_config_paths():
@@ -1309,7 +1354,9 @@ def _setup_ipc_and_connections():
     if G.master_instance:
         # Children ask the master to open settings when their device is
         # unassigned; nothing asks a child to open its own.
-        G.ipc_instance.show_settings_signal.connect(G.main_window.open_system_settings_dialog)
+        # a child asks only when its device is unassigned: open on Devices
+        G.ipc_instance.show_settings_signal.connect(
+            lambda: G.main_window.open_system_settings_dialog(tab='tab_Devices'))
     G.ipc_instance.show_adv_spr_signal.connect(G.main_window.settings_layout.advanced_spring_button_clicked)
     G.ipc_instance.show_cfg_ovds_signal.connect(G.main_window.settings_layout.configurator_button_clicked)
     G.ipc_instance.erase_cfg_ovds_signal.connect(G.main_window.settings_layout.erase_configurator_overrides)
@@ -1361,6 +1408,35 @@ def _check_version_update():
     """Check for version updates if not release or dev build."""
     G.main_window.updates.start()
 
+def _first_launch_message(dev_cap: str) -> str:
+    """The welcome box's text, for what first launch found.
+
+    With no VPforce device connected, the master's settings dialog turns
+    DirectInput support on when DirectLink is installed (see
+    SystemSettingsDialog._enable_directlink_for_first_launch); this says
+    so up front, or where to get DirectLink when it is missing.
+    """
+    lead = "First launch - set up your devices on the next page.\n\n"
+    if G.first_launch_autoconfig:
+        return (lead + f"Your {dev_cap} device was configured automatically from "
+                "the connected devices.  Review it and your other preferences, "
+                "then Save to complete setup.")
+    if G.master_instance and not FFBRhino.enumerate():
+        from telemffb.hw.ffb_dinput import bridge_availability
+        available, reason = bridge_availability()
+        if available:
+            return (lead + "No VPforce devices were found.  DirectLink is installed, "
+                    "so DirectInput support has been turned on - choose your "
+                    "device, then Save.")
+        return with_download_link(
+            lead + "No VPforce devices were found.  To use a DirectInput force "
+            "feedback device, install DirectLink and turn on DirectLink "
+            "integration in System Settings.\n\n" + reason)
+    return (lead + f"The {dev_cap} device could not be determined by name from "
+            "the connected devices.  Assign your device and review your "
+            "preferences, then Save.")
+
+
 def _check_system_settings_required():
     """Check if system settings dialog should be opened."""
 
@@ -1369,22 +1445,11 @@ def _check_system_settings_required():
         # First launch (no stored device configuration): the settings page
         # always opens so the user can review device assignments and the
         # rest of their preferences, whether or not auto-config succeeded.
-        if G.first_launch_autoconfig:
-            msg = (f"First launch: the {dev_cap} device was automatically "
-                   "configured from the connected devices.\n\n"
-                   "Please review the device assignment and your other "
-                   "preferences in System Settings, then save to complete "
-                   "setup.")
-        else:
-            msg = (f"First launch: the {dev_cap} device could not be "
-                   "determined by name from the connected devices.\n\n"
-                   "Please assign your device and review your preferences "
-                   "in System Settings.")
-        QMessageBox.information(None, "System Settings Required", msg)
+        QMessageBox.information(None, "Welcome to TelemFFB", _first_launch_message(dev_cap))
         if G.child_instance:
             G.ipc_instance.send_message("SHOW SETTINGS")
         else:
-            G.main_window.open_system_settings_dialog()
+            G.main_window.open_system_settings_dialog(tab='tab_Devices', first_launch=True)
         return
 
     if G.device_devpath is None:
@@ -1393,7 +1458,7 @@ def _check_system_settings_required():
         if G.child_instance:
             G.ipc_instance.send_message("SHOW SETTINGS")
         else:
-            G.main_window.open_system_settings_dialog()
+            G.main_window.open_system_settings_dialog(tab='tab_Devices')
 
 def _setup_async_initialization(dev : FFBRhino, dev_serial):
     """Setup background initialization that doesn't block main window appearance."""
@@ -1675,7 +1740,8 @@ def main():
     # ============================================================================
     # Set child instance flag and load system-wide settings
     G.child_instance = G.args.child
-    G.system_settings = utils.SystemSettings()
+    _log_debug_switches()
+    G.system_settings = _open_system_settings()
     migrated = G.system_settings.migrate_instance_scoped_globals()
     if G.system_settings.migrate_il2_korea_enable():
         logging.info(f"IL-2 Korea enable switch set from the IL2 switch and the Korea path: "

@@ -1573,9 +1573,10 @@ class MainWindow(QMainWindow):
                 
         self.setGeometry(x_pos, y_pos, 530, 700)
 
-    def open_system_settings_dialog(self):
+    def open_system_settings_dialog(self, *, tab=None, first_launch=False):
+        # keyword-only: menu actions connect here and pass `checked`
         try:
-            dialog = SystemSettingsDialog(self)
+            dialog = SystemSettingsDialog(self, tab=tab, first_launch=first_launch)
             dialog.raise_()
             dialog.activateWindow()
             dialog.show()
